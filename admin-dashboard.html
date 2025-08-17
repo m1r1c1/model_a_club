@@ -228,16 +228,16 @@
             loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
             loginBtn.disabled = true;
             
-            console.log('Login attempt:', { username, isConfigured: isSupabaseConfigured() });
+            console.log('=== LOGIN DEBUG ===');
+            console.log('Username:', username);
+            console.log('Password:', password);
+            console.log('Is configured:', isSupabaseConfigured());
             
             try {
                 if (!isSupabaseConfigured()) {
-                    console.log('Demo mode login');
-                    // Demo mode - use shared config credentials
+                    // Demo mode
                     const demoCredentials = getDemoCredentials();
-                    
                     if (username === demoCredentials.username && password === demoCredentials.password) {
-                        console.log('Demo login successful');
                         currentAdminUser = { 
                             username: demoCredentials.username, 
                             full_name: 'Demo Admin', 
@@ -246,38 +246,76 @@
                         showDashboard();
                         return;
                     } else {
-                        throw new Error(`Invalid credentials. Demo login: ${demoCredentials.username} / ${demoCredentials.password}`);
+                        throw new Error(`Demo credentials: ${demoCredentials.username} / ${demoCredentials.password}`);
                     }
                 }
                 
-                // Production mode - use the secure admin_login function
-                console.log('Production mode login - using admin_login function');
-                
+                // Production mode
                 if (!supabase) {
                     throw new Error('Database connection not available');
                 }
                 
-                // Hash the password for comparison
-                const hashedPassword = await hashPassword(password);
-                console.log('Calling admin_login function...');
+                // First, let's see what's actually in the database
+                console.log('Checking database for user...');
+                const { data: dbCheck, error: dbError } = await supabase
+                    .from('admin_users')
+                    .select('username, password_hash, is_active')
+                    .eq('username', username);
                 
-                // Call the flexible function with just the plain password
-                const { data, error } = await supabase.rpc('admin_login_flexible', {
-                    p_username: username,
-                    p_password: password
-                });
+                console.log('Database check result:', { dbCheck, dbError });
                 
-                console.log('Admin login function result:', { data, error });
-                
-                if (error) {
-                    console.error('Database function error:', error);
-                    throw new Error('Login failed: ' + error.message);
+                if (dbError) {
+                    throw new Error('Database error: ' + dbError.message);
                 }
                 
-                // Check if login was successful (function returns user data if successful)
+                if (!dbCheck || dbCheck.length === 0) {
+                    throw new Error('User not found in database');
+                }
+                
+                const storedUser = dbCheck[0];
+                console.log('Found user in database:', storedUser);
+                
+                // Try different password approaches
+                const hashedPassword = await hashPassword(password);
+                console.log('Generated hash:', hashedPassword);
+                console.log('Stored hash:', storedUser.password_hash);
+                
+                // Test 1: Try with generated hash
+                console.log('Test 1: Trying with generated hash...');
+                let { data, error } = await supabase.rpc('admin_login_simple', {
+                    p_username: username,
+                    p_password_hash: hashedPassword
+                });
+                
+                console.log('Hash test result:', { data, error });
+                
+                // Test 2: Try with stored hash (in case our hash generation is wrong)
+                if (!data || data.length === 0) {
+                    console.log('Test 2: Trying with stored hash...');
+                    ({ data, error } = await supabase.rpc('admin_login_simple', {
+                        p_username: username,
+                        p_password_hash: storedUser.password_hash
+                    }));
+                    console.log('Stored hash test result:', { data, error });
+                }
+                
+                // Test 3: Try with plain password
+                if (!data || data.length === 0) {
+                    console.log('Test 3: Trying with plain password...');
+                    ({ data, error } = await supabase.rpc('admin_login_simple', {
+                        p_username: username,
+                        p_password_hash: password
+                    }));
+                    console.log('Plain password test result:', { data, error });
+                }
+                
+                if (error) {
+                    throw new Error('Database function error: ' + error.message);
+                }
+                
                 if (data && data.length > 0) {
                     const admin = data[0];
-                    console.log('Login successful for user:', admin.username);
+                    console.log('Login successful!', admin);
                     
                     currentAdminUser = {
                         id: admin.id,
@@ -289,8 +327,8 @@
                     
                     showDashboard();
                 } else {
-                    console.log('Login failed - no user returned from function');
-                    throw new Error('Invalid username or password');
+                    console.log('All login attempts failed');
+                    throw new Error(`Login failed. Expected password hash: ${storedUser.password_hash}`);
                 }
                 
             } catch (error) {
