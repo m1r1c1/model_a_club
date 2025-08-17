@@ -14,6 +14,9 @@
     
     <!-- Supabase JavaScript Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- IMPORTANT: Load shared configuration first -->
+    <script src="config.js"></script>
     
     <style>
         /* CSS Reset and Base Styles */
@@ -602,28 +605,7 @@
     <!-- JavaScript for admin dashboard functionality -->
     <script>
         // ===== SUPABASE CONFIGURATION =====
-        // IMPORTANT: Replace these with your actual Supabase credentials
-        const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL'; // Replace with your project URL
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // Replace with your anon key
-        
-        // Initialize Supabase client - this connects to your database
-        let supabase;
-        
-        // Global variable for admin session management
-        let currentAdminUser = null;
-
-        // Function to check if Supabase credentials are configured
-        function isSupabaseConfigured() {
-            return SUPABASE_URL !== 'YOUR_SUPABASE_PROJECT_URL' && 
-                   SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY';
-        }
-        
-        // Initialize Supabase if credentials are provided
-        if (isSupabaseConfigured()) {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        } else {
-            console.warn('Supabase credentials not configured. Admin dashboard will run in demo mode.');
-        }
+        let supabase = initializeSupabase();
 
         // ===== AUTHENTICATION FUNCTIONS =====
         
