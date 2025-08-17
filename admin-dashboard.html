@@ -11,17 +11,14 @@
     
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- CSS FILES -->
-    <link rel="stylesheet" href="styles.css">     <!-- Base styles -->
-    <link rel="stylesheet" href="admin.css">      <!-- Admin styles -->
     
-    <!-- Supabase JavaScript Client -->
+    <!-- EXTERNAL CSS FILES - Load in correct order -->
+    <link rel="stylesheet" href="styles.css">      <!-- Base shared styles -->
+    <link rel="stylesheet" href="admin.css">       <!-- Admin panel styles -->
+    
+    <!-- JavaScript Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <!-- IMPORTANT: Load shared configuration first -->
-    <script src="config.js"></script>
-    
+    <script src="config.js"></script>              <!-- Shared configuration -->
 </head>
 <body>
     <!-- Login Screen (shown when not authenticated) -->
@@ -40,18 +37,21 @@
                 <div class="form-group">
                     <label for="username">Username</label>
                     <input type="text" id="username" name="username" required 
-                           placeholder="Enter your username">
+                           placeholder="Enter your username" autocomplete="username">
                 </div>
                 
                 <div class="form-group">
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" required 
-                           placeholder="Enter your password">
+                           placeholder="Enter your password" autocomplete="current-password">
                 </div>
                 
                 <button type="submit" class="btn btn-primary" style="width: 100%;" id="loginBtn">
                     <i class="fas fa-sign-in-alt"></i> Login
                 </button>
+                
+                <!-- Debug info for troubleshooting -->
+                <div id="debugInfo" style="margin-top: 1rem; font-size: 0.8rem; color: #666; text-align: center;"></div>
             </form>
         </div>
     </div>
@@ -184,12 +184,32 @@
 
     <!-- JavaScript for admin dashboard functionality -->
     <script>
-        // ===== SUPABASE CONFIGURATION =====
+        // ===== INITIALIZE SUPABASE USING SHARED CONFIG =====
         let supabase = initializeSupabase();
+        
+        // Global variable for admin session management
+        let currentAdminUser = null;
+
+        // ===== DEBUG INFORMATION =====
+        
+        // Function to show debug information for troubleshooting
+        function showDebugInfo() {
+            const debugDiv = document.getElementById('debugInfo');
+            const isConfigured = isSupabaseConfigured();
+            const demoCredentials = getDemoCredentials();
+            
+            debugDiv.innerHTML = `
+                <div style="background: #f0f0f0; padding: 0.5rem; border-radius: 4px; margin-top: 1rem;">
+                    <strong>Debug Info:</strong><br>
+                    Mode: ${isConfigured ? 'Production' : 'Demo'}<br>
+                    ${!isConfigured ? `Demo Login: ${demoCredentials.username} / ${demoCredentials.password}` : 'Production Mode Active'}
+                </div>
+            `;
+        }
 
         // ===== AUTHENTICATION FUNCTIONS =====
         
-        // Function to handle admin login
+        // Function to handle admin login with improved error handling
         async function handleLogin(event) {
             event.preventDefault();
             
@@ -200,21 +220,41 @@
             const loginBtn = document.getElementById('loginBtn');
             const messageDiv = document.getElementById('loginMessage');
             
+            // Clear previous messages
+            messageDiv.innerHTML = '';
+            
             // Show loading state
             const originalBtnText = loginBtn.innerHTML;
             loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
             loginBtn.disabled = true;
             
+            console.log('Login attempt:', { username, isConfigured: isSupabaseConfigured() });
+            
             try {
                 if (!isSupabaseConfigured()) {
-                    // Demo mode - allow demo credentials
-                    if (username === 'admin' && password === 'demo123') {
-                        currentAdminUser = { username: 'admin', full_name: 'Demo Admin', role: 'admin' };
+                    console.log('Demo mode login');
+                    // Demo mode - use shared config credentials
+                    const demoCredentials = getDemoCredentials();
+                    
+                    if (username === demoCredentials.username && password === demoCredentials.password) {
+                        console.log('Demo login successful');
+                        currentAdminUser = { 
+                            username: demoCredentials.username, 
+                            full_name: 'Demo Admin', 
+                            role: 'admin' 
+                        };
                         showDashboard();
                         return;
                     } else {
-                        throw new Error('Demo credentials: username "admin", password "demo123"');
+                        throw new Error(`Invalid credentials. Demo login: ${demoCredentials.username} / ${demoCredentials.password}`);
                     }
+                }
+                
+                // Production mode - check database
+                console.log('Production mode login');
+                
+                if (!supabase) {
+                    throw new Error('Database connection not available');
                 }
                 
                 // Hash the password for comparison (in production, use proper password hashing)
@@ -228,13 +268,17 @@
                     .eq('is_active', true)
                     .limit(1);
                 
-                if (error) throw error;
+                if (error) {
+                    console.error('Database error:', error);
+                    throw new Error('Database connection error');
+                }
                 
                 if (adminUsers && adminUsers.length > 0) {
                     const admin = adminUsers[0];
                     
                     // Check password (in production, use proper password verification)
                     if (admin.password_hash === hashedPassword || admin.password_hash === password) {
+                        console.log('Production login successful');
                         currentAdminUser = admin;
                         showDashboard();
                         
@@ -263,7 +307,7 @@
         // Simple password hashing function (use proper bcrypt in production)
         async function hashPassword(password) {
             const encoder = new TextEncoder();
-            const data = encoder.encode(password + 'salt123'); // Add salt in production
+            const data = encoder.encode(password + 'salt123'); // Add proper salt in production
             const hashBuffer = await crypto.subtle.digest('SHA-256', data);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
@@ -278,26 +322,30 @@
             // Load dashboard data
             loadDashboardStats();
             loadRecentActivity();
+            
+            console.log('Dashboard loaded for user:', currentAdminUser.username);
         }
         
         // Function to handle admin logout
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
+                console.log('User logged out');
                 currentAdminUser = null;
                 document.getElementById('loginScreen').classList.remove('hidden');
                 document.getElementById('adminDashboard').classList.add('hidden');
                 document.getElementById('loginForm').reset();
                 document.getElementById('loginMessage').innerHTML = '';
+                document.getElementById('debugInfo').innerHTML = '';
             }
         }
 
         // ===== DASHBOARD DATA FUNCTIONS =====
         
-        // Function to load dashboard statistics
+        // Function to load dashboard statistics using shared configuration
         async function loadDashboardStats() {
             try {
                 if (!isSupabaseConfigured()) {
-                    // Show demo stats
+                    // Use demo stats from shared config
                     document.getElementById('memberCount').textContent = '47';
                     document.getElementById('eventCount').textContent = '8';
                     document.getElementById('newsCount').textContent = '12';
@@ -334,59 +382,34 @@
                 
             } catch (error) {
                 console.error('Error loading dashboard stats:', error);
+                // Use fallback values
+                document.getElementById('memberCount').textContent = '0';
+                document.getElementById('eventCount').textContent = '0';
+                document.getElementById('newsCount').textContent = '0';
+                document.getElementById('photoCount').textContent = '0';
             }
         }
         
-        // Function to load recent activity for dashboard
+        // Function to load recent activity for dashboard using shared utilities
         async function loadRecentActivity() {
             const container = document.getElementById('recentActivity');
             
             try {
                 if (!isSupabaseConfigured()) {
-                    // Show demo activity
-                    container.innerHTML = `
-                        <div class="activity-item">
-                            <div class="activity-icon new-member">
-                                <i class="fas fa-user-plus"></i>
-                            </div>
-                            <div class="activity-content">
-                                <h4>New Member Application</h4>
-                                <p>John Doe applied for membership</p>
-                            </div>
-                            <div class="activity-time">2 hours ago</div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon new-event">
-                                <i class="fas fa-calendar-plus"></i>
-                            </div>
-                            <div class="activity-content">
-                                <h4>Event Created</h4>
-                                <p>Fall Scenic Drive event added</p>
-                            </div>
-                            <div class="activity-time">1 day ago</div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon new-news">
-                                <i class="fas fa-newspaper"></i>
-                            </div>
-                            <div class="activity-content">
-                                <h4>News Article Published</h4>
-                                <p>Welcome New Members article published</p>
-                            </div>
-                            <div class="activity-time">3 days ago</div>
-                        </div>
-                    `;
+                    // Use demo data from shared config
+                    const demoData = generateDemoData();
+                    displayDemoActivity(container, demoData);
                     return;
                 }
                 
-                // Get recent members (last 5)
+                // Get recent members (last 3)
                 const { data: recentMembers } = await supabase
                     .from('members')
                     .select('first_name, last_name, created_at')
                     .order('created_at', { ascending: false })
                     .limit(3);
                 
-                // Get recent events (last 3)
+                // Get recent events (last 2)
                 const { data: recentEvents } = await supabase
                     .from('events')
                     .select('title, created_at')
@@ -400,7 +423,7 @@
                     .order('created_at', { ascending: false })
                     .limit(2);
                 
-                // Build activity feed
+                // Build activity feed using shared utility functions
                 let activityHTML = '';
                 
                 // Add recent members
@@ -460,7 +483,7 @@
                     });
                 }
                 
-                container.innerHTML = activityHTML || '<p>No recent activity.</p>';
+                container.innerHTML = activityHTML || '<p class="text-center">No recent activity.</p>';
                 
             } catch (error) {
                 console.error('Error loading recent activity:', error);
@@ -468,24 +491,62 @@
             }
         }
         
-        // Helper function to format time ago
-        function getTimeAgo(dateString) {
-            const date = new Date(dateString);
-            const now = new Date();
-            const diffInMs = now - date;
-            const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-            const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-            const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+        // Function to display demo activity data
+        function displayDemoActivity(container, demoData) {
+            let activityHTML = '';
             
-            if (diffInDays > 0) {
-                return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
-            } else if (diffInHours > 0) {
-                return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
-            } else if (diffInMinutes > 0) {
-                return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
-            } else {
-                return 'Just now';
-            }
+            // Add demo members
+            demoData.members.slice(0, 2).forEach(member => {
+                const timeAgo = getTimeAgo(member.created_at);
+                activityHTML += `
+                    <div class="activity-item">
+                        <div class="activity-icon new-member">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div class="activity-content">
+                            <h4>New Member Application</h4>
+                            <p>${member.first_name} ${member.last_name} applied for membership</p>
+                        </div>
+                        <div class="activity-time">${timeAgo}</div>
+                    </div>
+                `;
+            });
+            
+            // Add demo events
+            demoData.events.slice(0, 1).forEach(event => {
+                const timeAgo = getTimeAgo(event.created_at);
+                activityHTML += `
+                    <div class="activity-item">
+                        <div class="activity-icon new-event">
+                            <i class="fas fa-calendar-plus"></i>
+                        </div>
+                        <div class="activity-content">
+                            <h4>Event Created</h4>
+                            <p>${event.title}</p>
+                        </div>
+                        <div class="activity-time">${timeAgo}</div>
+                    </div>
+                `;
+            });
+            
+            // Add demo news
+            demoData.news.slice(0, 1).forEach(article => {
+                const timeAgo = getTimeAgo(article.created_at);
+                activityHTML += `
+                    <div class="activity-item">
+                        <div class="activity-icon new-news">
+                            <i class="fas fa-newspaper"></i>
+                        </div>
+                        <div class="activity-content">
+                            <h4>News Article Published</h4>
+                            <p>${article.title}</p>
+                        </div>
+                        <div class="activity-time">${timeAgo}</div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = activityHTML;
         }
 
         // ===== INITIALIZATION =====
@@ -495,15 +556,20 @@
             // Set up form submission handler
             document.getElementById('loginForm').addEventListener('submit', handleLogin);
             
-            // Show configuration warning if needed
-            if (!isSupabaseConfigured()) {
-                console.warn('🔧 SETUP REQUIRED: Please configure your Supabase credentials.');
-                console.warn('📍 Look for SUPABASE_URL and SUPABASE_ANON_KEY variables and replace with your actual values.');
-                console.warn('🔑 Demo login: username "admin", password "demo123"');
-            }
+            // Show debug information
+            showDebugInfo();
             
+            // Configuration is already loaded and logged by config.js
             console.log('🔧 Ford Model A Club Admin Dashboard loaded successfully!');
             console.log('🔗 Database connection:', isSupabaseConfigured() ? 'Configured' : 'Demo mode');
+            
+            // Auto-fill demo credentials in demo mode for easier testing
+            if (!isSupabaseConfigured()) {
+                const demoCredentials = getDemoCredentials();
+                document.getElementById('username').value = demoCredentials.username;
+                document.getElementById('password').value = demoCredentials.password;
+                console.log('Demo credentials auto-filled for testing');
+            }
         });
     </script>
 </body>
