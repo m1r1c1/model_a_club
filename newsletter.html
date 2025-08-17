@@ -26,95 +26,52 @@
     
 </head>
 <body>
-    <!-- Fixed navigation header -->
-    <header class="header">
-        <div class="container">
-            <nav class="nav-container">
-                <!-- Logo with car icon -->
-                <a href="#" class="logo">
-                    <i class="fas fa-car-side"></i>
-                    <span>Model A Club</span>
-                </a>
-                
-                <!-- Desktop navigation menu -->
-                <ul class="nav-menu">
-                    <li><a href="#home">Home</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="#events">Events</a></li>
-                    <li><a href="#news">News</a></li>
-                    <li><a href="#gallery">Gallery</a></li>
-                    <li><a href="#membership">Join Us</a></li>
-                    <li><a href="#contact">Contact</a></li>
-                </ul>
-                
-                <!-- Mobile menu toggle button -->
-                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
-                    <i class="fas fa-bars"></i>
-                </button>
-            </nav>
-        </div>
-    </header>
+    <!-- Include Header -->
+    <div id="header-placeholder"></div>
 
-    <!-- Footer with additional links and information -->
-    <footer class="footer">
+    <!-- Main Content Section (Newsletter specific content would go here) -->
+    <main class="main-content">
         <div class="container">
-            <div class="footer-content">
-                <!-- About the club footer section -->
-                <div class="footer-section">
-                    <h3>About Our Club</h3>
-                    <p>The Ford Model A Club has been bringing together enthusiasts of Henry Ford's successor to the Model T since 1985. We're dedicated to preserving, restoring, and enjoying these remarkable automobiles that helped shape American transportation history.</p>
-                    <div class="social-links">
-                        <a href="#" title="Facebook"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" title="Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="#" title="YouTube"><i class="fab fa-youtube"></i></a>
-                        <a href="#" title="Email"><i class="fas fa-envelope"></i></a>
-                    </div>
-                </div>
-                
-                <!-- Quick links footer section -->
-                <div class="footer-section">
-                    <h3>Quick Links</h3>
-                    <p><a href="#events">Upcoming Events</a></p>
-                    <p><a href="#membership">Membership Info</a></p>
-                    <p><a href="#gallery">Photo Gallery</a></p>
-                    <p><a href="/newsletter">Newsletter Archive</a></p>
-                    <p><a href="/bylaws">Club Bylaws</a></p>
-                    <p><a href="/resources">Technical Resources</a></p>
-                </div>
-                
-                <!-- Resources footer section -->
-                <div class="footer-section">
-                    <h3>Model A Resources</h3>
-                    <p><a href="/parts-suppliers">Parts Suppliers</a></p>
-                    <p><a href="/restoration-guides">Restoration Guides</a></p>
-                    <p><a href="/maintenance-tips">Maintenance Tips</a></p>
-                    <p><a href="/history">Model A History</a></p>
-                    <p><a href="/technical-library">Technical Library</a></p>
-                    <p><a href="/swap-meet">Parts Swap Meet</a></p>
-                </div>
-                
-                <!-- Contact footer section -->
-                <div class="footer-section">
-                    <h3>Get In Touch</h3>
-                    <p><i class="fas fa-envelope"></i> info@modelaclub.org</p>
-                    <p><i class="fas fa-phone"></i> (555) 123-4567</p>
-                    <p><i class="fas fa-map-marker-alt"></i> 123 Main Street<br>Your City, ST 12345</p>
-                    <p><strong>Next Meeting:</strong><br><span id="nextMeeting">Loading...</span></p>
-                </div>
-            </div>
-            
-            <!-- Copyright and additional footer info -->
-            <div class="footer-bottom">
-                <p>&copy; 2025 Ford Model A Club. All rights reserved. | 
-                <a href="/privacy">Privacy Policy</a> | 
-                <a href="/terms">Terms of Service</a> | 
-                <a href="/accessibility">Accessibility</a></p>
-            </div>
+            <h1>Newsletter Page Content</h1>
+            <p>This is where your newsletter-specific content would go.</p>
+            <p>The header and footer are now loaded from separate files for easier maintenance.</p>
         </div>
-    </footer>
+    </main>
+
+    <!-- Include Footer -->
+    <div id="footer-placeholder"></div>
 
     <!-- JavaScript for Supabase integration and interactive functionality -->
     <script>
+        // ===== HTML INCLUDE FUNCTIONALITY =====
+        
+        /**
+         * Load external HTML files into placeholders
+         * This function provides a simple way to include header and footer files
+         */
+        async function loadHTMLIncludes() {
+            try {
+                // Load header
+                const headerResponse = await fetch('header.html');
+                if (headerResponse.ok) {
+                    const headerHTML = await headerResponse.text();
+                    document.getElementById('header-placeholder').innerHTML = headerHTML;
+                } else {
+                    console.error('Failed to load header.html');
+                }
+                
+                // Load footer
+                const footerResponse = await fetch('footer.html');
+                if (footerResponse.ok) {
+                    const footerHTML = await footerResponse.text();
+                    document.getElementById('footer-placeholder').innerHTML = footerHTML;
+                } else {
+                    console.error('Failed to load footer.html');
+                }
+            } catch (error) {
+                console.error('Error loading HTML includes:', error);
+            }
+        }
 
         // ===== EXISTING MOBILE AND UI FUNCTIONS =====
         
@@ -136,34 +93,42 @@
         }
 
         // Close mobile menu when clicking on a menu link
-        document.querySelectorAll('.nav-menu a').forEach(link => {
-            link.addEventListener('click', () => {
-                const menu = document.querySelector('.nav-menu');
-                const button = document.querySelector('.mobile-menu-toggle');
-                const icon = button.querySelector('i');
-                
-                // Close menu and reset icon
-                menu.classList.remove('active');
-                icon.className = 'fas fa-bars';
+        function setupMobileMenuClosing() {
+            document.querySelectorAll('.nav-menu a').forEach(link => {
+                link.addEventListener('click', () => {
+                    const menu = document.querySelector('.nav-menu');
+                    const button = document.querySelector('.mobile-menu-toggle');
+                    const icon = button.querySelector('i');
+                    
+                    // Close menu and reset icon
+                    menu.classList.remove('active');
+                    icon.className = 'fas fa-bars';
+                });
             });
-        });
+        }
 
         // Show/hide Model A details based on ownership selection
         function toggleModelADetails() {
             const select = document.getElementById('modelAOwned');
             const details = document.getElementById('modelADetails');
             
-            // Show details section if user owns or is restoring a Model A
-            if (select.value === 'true' || select.value === 'restoring') {
-                details.style.display = 'block';
-                // Make fields required when visible
-                document.getElementById('modelYear').required = true;
-                document.getElementById('bodyStyle').required = true;
-            } else {
-                details.style.display = 'none';
-                // Remove required attribute when hidden
-                document.getElementById('modelYear').required = false;
-                document.getElementById('bodyStyle').required = false;
+            if (select && details) {
+                // Show details section if user owns or is restoring a Model A
+                if (select.value === 'true' || select.value === 'restoring') {
+                    details.style.display = 'block';
+                    // Make fields required when visible
+                    const modelYear = document.getElementById('modelYear');
+                    const bodyStyle = document.getElementById('bodyStyle');
+                    if (modelYear) modelYear.required = true;
+                    if (bodyStyle) bodyStyle.required = true;
+                } else {
+                    details.style.display = 'none';
+                    // Remove required attribute when hidden
+                    const modelYear = document.getElementById('modelYear');
+                    const bodyStyle = document.getElementById('bodyStyle');
+                    if (modelYear) modelYear.required = false;
+                    if (bodyStyle) bodyStyle.required = false;
+                }
             }
         }
 
@@ -174,51 +139,60 @@
         }
 
         // Smooth scrolling for navigation links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    // Calculate offset to account for fixed header
-                    const headerHeight = document.querySelector('.header').offsetHeight;
-                    const targetPosition = target.offsetTop - headerHeight - 20;
-                    
-                    window.scrollTo({
-                        top: targetPosition,
-                        behavior: 'smooth'
-                    });
-                }
+        function setupSmoothScrolling() {
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        // Calculate offset to account for fixed header
+                        const header = document.querySelector('.header');
+                        const headerHeight = header ? header.offsetHeight : 0;
+                        const targetPosition = target.offsetTop - headerHeight - 20;
+                        
+                        window.scrollTo({
+                            top: targetPosition,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
             });
-        });
+        }
 
         // Add scroll effect to header (darken when scrolled)
-        window.addEventListener('scroll', () => {
-            const header = document.querySelector('.header');
-            if (window.scrollY > 100) {
-                header.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
-                header.style.backdropFilter = 'blur(10px)';
-            } else {
-                header.style.backgroundColor = '#ffffff';
-                header.style.backdropFilter = 'none';
-            }
-        });
-
-        // Form validation enhancements
-        document.querySelectorAll('input[required], select[required]').forEach(field => {
-            field.addEventListener('invalid', function(e) {
-                // Custom validation messages
-                if (this.validity.valueMissing) {
-                    this.setCustomValidity('This field is required');
-                } else if (this.validity.typeMismatch && this.type === 'email') {
-                    this.setCustomValidity('Please enter a valid email address');
+        function setupHeaderScrollEffect() {
+            window.addEventListener('scroll', () => {
+                const header = document.querySelector('.header');
+                if (header) {
+                    if (window.scrollY > 100) {
+                        header.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
+                        header.style.backdropFilter = 'blur(10px)';
+                    } else {
+                        header.style.backgroundColor = '#ffffff';
+                        header.style.backdropFilter = 'none';
+                    }
                 }
             });
-            
-            field.addEventListener('input', function() {
-                // Clear custom validation message when user starts typing
-                this.setCustomValidity('');
+        }
+
+        // Form validation enhancements
+        function setupFormValidation() {
+            document.querySelectorAll('input[required], select[required]').forEach(field => {
+                field.addEventListener('invalid', function(e) {
+                    // Custom validation messages
+                    if (this.validity.valueMissing) {
+                        this.setCustomValidity('This field is required');
+                    } else if (this.validity.typeMismatch && this.type === 'email') {
+                        this.setCustomValidity('Please enter a valid email address');
+                    }
+                });
+                
+                field.addEventListener('input', function() {
+                    // Clear custom validation message when user starts typing
+                    this.setCustomValidity('');
+                });
             });
-        });
+        }
 
         // Statistics counter animation (runs when page loads)
         function animateCounters() {
@@ -245,15 +219,26 @@
         // ===== PAGE INITIALIZATION =====
         
         // Initialize all content when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set up form submission handler
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Load header and footer first
+            await loadHTMLIncludes();
+            
+            // Set up event listeners after includes are loaded
+            setTimeout(() => {
+                setupMobileMenuClosing();
+                setupSmoothScrolling();
+                setupHeaderScrollEffect();
+                setupFormValidation();
+            }, 100); // Small delay to ensure DOM is updated
+            
+            // Set up form submission handler if form exists
             const membershipForm = document.getElementById('membershipForm');
             if (membershipForm) {
                 membershipForm.addEventListener('submit', handleMembershipSubmit);
             }
             
             // Show configuration warning if needed
-            if (!isSupabaseConfigured()) {
+            if (typeof isSupabaseConfigured === 'function' && !isSupabaseConfigured()) {
                 console.warn('🔧 SETUP REQUIRED: Please configure your Supabase credentials in the JavaScript section of this file.');
                 console.warn('📍 Look for SUPABASE_URL and SUPABASE_ANON_KEY variables and replace with your actual values.');
                 console.warn('📖 See the setup instructions for details on getting these values from your Supabase dashboard.');
@@ -316,10 +301,17 @@
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             return emailRegex.test(email);
         }
+
+        // Handle membership form submission (placeholder function)
+        function handleMembershipSubmit(event) {
+            event.preventDefault();
+            console.log('Membership form submitted');
+            // Add your form submission logic here
+        }
         
         // Log successful initialization
         console.log('🚗 Ford Model A Club website loaded successfully!');
-        console.log('🔗 Database connection:', isSupabaseConfigured() ? 'Configured' : 'Demo mode');
+        console.log('🔗 Database connection:', typeof isSupabaseConfigured === 'function' && isSupabaseConfigured() ? 'Configured' : 'Demo mode');
     </script>
 </body>
 </html>
