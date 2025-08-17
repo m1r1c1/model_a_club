@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Meta tags for proper responsive behavior and SEO -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ford Model A Club - Admin Dashboard</title>
+    
+    <!-- Font imports for modern typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Supabase JavaScript Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        /* CSS Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Root variables for consistent theming throughout the admin panel */
+        :root {
+            --primary-color: #2c1810; /* Rich brown representing vintage leather */
+            --secondary-color: #8b4513; /* Classic car brown */
+            --accent-color: #d4af37; /* Gold accent for premium feel */
+            --text-color: #333;
+            --light-bg: #f8f6f3; /* Warm off-white */
+            --white: #ffffff;
+            --danger-color: #dc3545;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-hover: 0 8px 25px rgba(0,0,0,0.2);
+            --border-radius: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        /* Base typography and body styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background: var(--light-bg);
+            min-height: 100vh;
+        }
+
+        /* Heading styles using classic serif font */
+        h1, h2, h3 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        /* Container for consistent page width and centering */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Loading spinner for dynamic content */
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Message styling for success, error, warning, info */
+        .message {
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* ===== LOGIN SCREEN STYLES ===== */
+        
+        /* Login container centered on screen */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
+
+        /* Login form card styling */
+        .login-card {
+            background: var(--white);
+            padding: 3rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-hover);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-card h1 {
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        .login-card .subtitle {
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        /* Form styling for admin forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--primary-color);
+            text-align: left;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
+        }
+
+        /* Button styling for admin actions */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: var(--secondary-color);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-color);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* ===== ADMIN DASHBOARD STYLES ===== */
+        
+        /* Admin header with navigation */
+        .admin-header {
+            background: var(--white);
+            box-shadow: var(--shadow);
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .admin-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .admin-logo i {
+            color: var(--secondary-color);
+            font-size: 2rem;
+        }
+
+        /* Admin user info and logout */
+        .admin-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logout-btn {
+            background: var(--danger-color);
+            color: var(--white);
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
+        /* Dashboard main content */
+        .dashboard-main {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        /* Dashboard statistics cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+            color: var(--white);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .stat-card i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.8;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .stat-label {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        /* Management sections grid */
+        .management-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        /* Management card styling */
+        .management-card {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            text-align: center;
+            border: 2px solid transparent;
+        }
+
+        .management-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--secondary-color);
+        }
+
+        .management-card i {
+            font-size: 3rem;
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+
+        .management-card h3 {
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .management-card p {
+            margin-bottom: 1.5rem;
+            color: #666;
+        }
+
+        .management-card .btn {
+            width: 100%;
+        }
+
+        /* Recent activity section */
+        .recent-activity {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 1rem;
+        }
+
+        .activity-icon.new-member {
+            background: var(--success-color);
+        }
+
+        .activity-icon.new-event {
+            background: var(--info-color);
+        }
+
+        .activity-icon.new-news {
+            background: var(--warning-color);
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-content h4 {
+            margin-bottom: 0.25rem;
+            font-size: 1rem;
+        }
+
+        .activity-content p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .activity-time {
+            color: #999;
+            font-size: 0.8rem;
+        }
+
+        /* Responsive design for admin dashboard */
+        @media (max-width: 768px) {
+            .admin-nav {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .management-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+
+            .login-card {
+                margin: 1rem;
+                padding: 2rem;
+            }
+        }
+
+        /* Utility classes */
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-2 {
+            margin-bottom: 1rem;
+        }
+
+        .mb-3 {
+            margin-bottom: 1.5rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen (shown when not authenticated) -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-card">
+            <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
+                <i class="fas fa-car-side" style="font-size: 3rem; color: var(--secondary-color);"></i>
+            </div>
+            <h1>Admin Login</h1>
+            <p class="subtitle">Ford Model A Club Management</p>
+            
+            <!-- Login form -->
+            <form id="loginForm">
+                <div id="loginMessage"></div>
+                
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required 
+                           placeholder="Enter your username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required 
+                           placeholder="Enter your password">
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard (shown when authenticated) -->
+    <div id="adminDashboard" class="hidden">
+        <!-- Admin header with navigation -->
+        <header class="admin-header">
+            <div class="container">
+                <nav class="admin-nav">
+                    <div class="admin-logo">
+                        <i class="fas fa-car-side"></i>
+                        <span>Club Admin Dashboard</span>
+                    </div>
+                    <div class="admin-user">
+                        <span>Welcome, <strong id="currentUser">Admin</strong></span>
+                        <button class="logout-btn" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </div>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main dashboard content -->
+        <div class="container">
+            <!-- Dashboard overview -->
+            <div class="dashboard-main">
+                <h2>Dashboard Overview</h2>
+                <p class="mb-3">Welcome to the Ford Model A Club administration dashboard. Select a management area below to get started.</p>
+                
+                <!-- Statistics cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-users"></i>
+                        <div class="stat-number" id="memberCount">0</div>
+                        <div class="stat-label">Total Members</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-calendar-alt"></i>
+                        <div class="stat-number" id="eventCount">0</div>
+                        <div class="stat-label">Upcoming Events</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-newspaper"></i>
+                        <div class="stat-number" id="newsCount">0</div>
+                        <div class="stat-label">News Articles</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-images"></i>
+                        <div class="stat-number" id="photoCount">0</div>
+                        <div class="stat-label">Gallery Photos</div>
+                    </div>
+                </div>
+
+                <!-- Management areas -->
+                <h3>Management Areas</h3>
+                <div class="management-grid">
+                    <!-- Events Management -->
+                    <div class="management-card">
+                        <i class="fas fa-calendar-alt"></i>
+                        <h3>Events Management</h3>
+                        <p>Create, edit, and manage club events, meetings, and activities. Set RSVP requirements and track attendance.</p>
+                        <a href="admin-events.html" class="btn btn-primary">
+                            <i class="fas fa-calendar-plus"></i> Manage Events
+                        </a>
+                    </div>
+
+                    <!-- News Management -->
+                    <div class="management-card">
+                        <i class="fas fa-newspaper"></i>
+                        <h3>News Management</h3>
+                        <p>Write and publish club news, announcements, and articles. Keep members informed about club activities.</p>
+                        <a href="admin-news.html" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Manage News
+                        </a>
+                    </div>
+
+                    <!-- Members Management -->
+                    <div class="management-card">
+                        <i class="fas fa-users"></i>
+                        <h3>Members Management</h3>
+                        <p>Review membership applications, approve new members, and manage member information and status.</p>
+                        <a href="admin-members.html" class="btn btn-primary">
+                            <i class="fas fa-user-check"></i> Manage Members
+                        </a>
+                    </div>
+
+                    <!-- Photo Gallery Management -->
+                    <div class="management-card">
+                        <i class="fas fa-images"></i>
+                        <h3>Photo Gallery</h3>
+                        <p>Upload and manage photo gallery images. Showcase member cars and club events with descriptions.</p>
+                        <a href="admin-photos.html" class="btn btn-primary">
+                            <i class="fas fa-camera"></i> Manage Photos
+                        </a>
+                    </div>
+
+                    <!-- Admin Users Management -->
+                    <div class="management-card">
+                        <i class="fas fa-user-shield"></i>
+                        <h3>Admin Users</h3>
+                        <p>Create and manage administrative user accounts. Set roles and permissions for club officers.</p>
+                        <a href="admin-users.html" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Manage Admins
+                        </a>
+                    </div>
+
+                    <!-- Website Management -->
+                    <div class="management-card">
+                        <i class="fas fa-globe"></i>
+                        <h3>Website Settings</h3>
+                        <p>Configure website settings, contact information, and general club details displayed on the main site.</p>
+                        <a href="admin-settings.html" class="btn btn-primary">
+                            <i class="fas fa-cog"></i> Website Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent activity section -->
+            <div class="recent-activity">
+                <h3>Recent Activity</h3>
+                <div id="recentActivity">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for admin dashboard functionality -->
+    <script>
+        // ===== SUPABASE CONFIGURATION =====
+        // IMPORTANT: Replace these with your actual Supabase credentials
+        const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL'; // Replace with your project URL
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // Replace with your anon key
+        
+        // Initialize Supabase client - this connects to your database
+        let supabase;
+        
+        // Global variable for admin session management
+        let currentAdminUser = null;
+
+        // Function to check if Supabase credentials are configured
+        function isSupabaseConfigured() {
+            return SUPABASE_URL !== 'YOUR_SUPABASE_PROJECT_URL' && 
+                   SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY';
+        }
+        
+        // Initialize Supabase if credentials are provided
+        if (isSupabaseConfigured()) {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } else {
+            console.warn('Supabase credentials not configured. Admin dashboard will run in demo mode.');
+        }
+
+        // ===== AUTHENTICATION FUNCTIONS =====
+        
+        // Function to handle admin login
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            const username = formData.get('username');
+            const password = formData.get('password');
+            const loginBtn = document.getElementById('loginBtn');
+            const messageDiv = document.getElementById('loginMessage');
+            
+            // Show loading state
+            const originalBtnText = loginBtn.innerHTML;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+            loginBtn.disabled = true;
+            
+            try {
+                if (!isSupabaseConfigured()) {
+                    // Demo mode - allow demo credentials
+                    if (username === 'admin' && password === 'demo123') {
+                        currentAdminUser = { username: 'admin', full_name: 'Demo Admin', role: 'admin' };
+                        showDashboard();
+                        return;
+                    } else {
+                        throw new Error('Demo credentials: username "admin", password "demo123"');
+                    }
+                }
+                
+                // Hash the password for comparison (in production, use proper password hashing)
+                const hashedPassword = await hashPassword(password);
+                
+                // Query admin users table for authentication
+                const { data: adminUsers, error } = await supabase
+                    .from('admin_users')
+                    .select('*')
+                    .eq('username', username)
+                    .eq('is_active', true)
+                    .limit(1);
+                
+                if (error) throw error;
+                
+                if (adminUsers && adminUsers.length > 0) {
+                    const admin = adminUsers[0];
+                    
+                    // Check password (in production, use proper password verification)
+                    if (admin.password_hash === hashedPassword || admin.password_hash === password) {
+                        currentAdminUser = admin;
+                        showDashboard();
+                        
+                        // Update last login time
+                        await supabase
+                            .from('admin_users')
+                            .update({ last_login: new Date().toISOString() })
+                            .eq('id', admin.id);
+                    } else {
+                        throw new Error('Invalid username or password');
+                    }
+                } else {
+                    throw new Error('Invalid username or password');
+                }
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                messageDiv.innerHTML = `<div class="message error">${error.message}</div>`;
+            } finally {
+                // Reset button state
+                loginBtn.innerHTML = originalBtnText;
+                loginBtn.disabled = false;
+            }
+        }
+        
+        // Simple password hashing function (use proper bcrypt in production)
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password + 'salt123'); // Add salt in production
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        
+        // Function to show the admin dashboard after successful login
+        function showDashboard() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('adminDashboard').classList.remove('hidden');
+            document.getElementById('currentUser').textContent = currentAdminUser.full_name || currentAdminUser.username;
+            
+            // Load dashboard data
+            loadDashboardStats();
+            loadRecentActivity();
+        }
+        
+        // Function to handle admin logout
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                currentAdminUser = null;
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('adminDashboard').classList.add('hidden');
+                document.getElementById('loginForm').reset();
+                document.getElementById('loginMessage').innerHTML = '';
+            }
+        }
+
+        // ===== DASHBOARD DATA FUNCTIONS =====
+        
+        // Function to load dashboard statistics
+        async function loadDashboardStats() {
+            try {
+                if (!isSupabaseConfigured()) {
+                    // Show demo stats
+                    document.getElementById('memberCount').textContent = '47';
+                    document.getElementById('eventCount').textContent = '8';
+                    document.getElementById('newsCount').textContent = '12';
+                    document.getElementById('photoCount').textContent = '156';
+                    return;
+                }
+                
+                // Get member count
+                const { count: memberCount } = await supabase
+                    .from('members')
+                    .select('*', { count: 'exact', head: true });
+                
+                // Get upcoming events count
+                const { count: eventCount } = await supabase
+                    .from('events')
+                    .select('*', { count: 'exact', head: true })
+                    .gte('event_date', new Date().toISOString().split('T')[0]);
+                
+                // Get news count
+                const { count: newsCount } = await supabase
+                    .from('club_news')
+                    .select('*', { count: 'exact', head: true });
+                
+                // Get photos count
+                const { count: photoCount } = await supabase
+                    .from('photos')
+                    .select('*', { count: 'exact', head: true });
+                
+                // Update dashboard stats
+                document.getElementById('memberCount').textContent = memberCount || 0;
+                document.getElementById('eventCount').textContent = eventCount || 0;
+                document.getElementById('newsCount').textContent = newsCount || 0;
+                document.getElementById('photoCount').textContent = photoCount || 0;
+                
+            } catch (error) {
+                console.error('Error loading dashboard stats:', error);
+            }
+        }
+        
+        // Function to load recent activity for dashboard
+        async function loadRecentActivity() {
+            const container = document.getElementById('recentActivity');
+            
+            try {
+                if (!isSupabaseConfigured()) {
+                    // Show demo activity
+                    container.innerHTML = `
+                        <div class="activity-item">
+                            <div class="activity-icon new-member">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h4>New Member Application</h4>
+                                <p>John Doe applied for membership</p>
+                            </div>
+                            <div class="activity-time">2 hours ago</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon new-event">
+                                <i class="fas fa-calendar-plus"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h4>Event Created</h4>
+                                <p>Fall Scenic Drive event added</p>
+                            </div>
+                            <div class="activity-time">1 day ago</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon new-news">
+                                <i class="fas fa-newspaper"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h4>News Article Published</h4>
+                                <p>Welcome New Members article published</p>
+                            </div>
+                            <div class="activity-time">3 days ago</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Get recent members (last 5)
+                const { data: recentMembers } = await supabase
+                    .from('members')
+                    .select('first_name, last_name, created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(3);
+                
+                // Get recent events (last 3)
+                const { data: recentEvents } = await supabase
+                    .from('events')
+                    .select('title, created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(2);
+                
+                // Get recent news (last 2)
+                const { data: recentNews } = await supabase
+                    .from('club_news')
+                    .select('title, created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(2);
+                
+                // Build activity feed
+                let activityHTML = '';
+                
+                // Add recent members
+                if (recentMembers) {
+                    recentMembers.forEach(member => {
+                        const timeAgo = getTimeAgo(member.created_at);
+                        activityHTML += `
+                            <div class="activity-item">
+                                <div class="activity-icon new-member">
+                                    <i class="fas fa-user-plus"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <h4>New Member Application</h4>
+                                    <p>${member.first_name} ${member.last_name} applied for membership</p>
+                                </div>
+                                <div class="activity-time">${timeAgo}</div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                // Add recent events
+                if (recentEvents) {
+                    recentEvents.forEach(event => {
+                        const timeAgo = getTimeAgo(event.created_at);
+                        activityHTML += `
+                            <div class="activity-item">
+                                <div class="activity-icon new-event">
+                                    <i class="fas fa-calendar-plus"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <h4>Event Created</h4>
+                                    <p>${event.title}</p>
+                                </div>
+                                <div class="activity-time">${timeAgo}</div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                // Add recent news
+                if (recentNews) {
+                    recentNews.forEach(article => {
+                        const timeAgo = getTimeAgo(article.created_at);
+                        activityHTML += `
+                            <div class="activity-item">
+                                <div class="activity-icon new-news">
+                                    <i class="fas fa-newspaper"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <h4>News Article Published</h4>
+                                    <p>${article.title}</p>
+                                </div>
+                                <div class="activity-time">${timeAgo}</div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                container.innerHTML = activityHTML || '<p>No recent activity.</p>';
+                
+            } catch (error) {
+                console.error('Error loading recent activity:', error);
+                container.innerHTML = '<div class="message error">Error loading recent activity.</div>';
+            }
+        }
+        
+        // Helper function to format time ago
+        function getTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffInMs = now - date;
+            const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+            const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+            const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+            
+            if (diffInDays > 0) {
+                return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+            } else if (diffInHours > 0) {
+                return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+            } else if (diffInMinutes > 0) {
+                return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
+            } else {
+                return 'Just now';
+            }
+        }
+
+        // ===== INITIALIZATION =====
+        
+        // Initialize admin dashboard when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up form submission handler
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            
+            // Show configuration warning if needed
+            if (!isSupabaseConfigured()) {
+                console.warn('🔧 SETUP REQUIRED: Please configure your Supabase credentials.');
+                console.warn('📍 Look for SUPABASE_URL and SUPABASE_ANON_KEY variables and replace with your actual values.');
+                console.warn('🔑 Demo login: username "admin", password "demo123"');
+            }
+            
+            console.log('🔧 Ford Model A Club Admin Dashboard loaded successfully!');
+            console.log('🔗 Database connection:', isSupabaseConfigured() ? 'Configured' : 'Demo mode');
+        });
+    </script>
+</body>
+</html>
