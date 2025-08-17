@@ -250,47 +250,46 @@
                     }
                 }
                 
-                // Production mode - check database
-                console.log('Production mode login');
+                // Production mode - use the secure admin_login function
+                console.log('Production mode login - using admin_login function');
                 
                 if (!supabase) {
                     throw new Error('Database connection not available');
                 }
                 
-                // Hash the password for comparison (in production, use proper password hashing)
+                // Hash the password for comparison
                 const hashedPassword = await hashPassword(password);
+                console.log('Calling admin_login function...');
                 
-                // Query admin users table for authentication
-                const { data: adminUsers, error } = await supabase
-                    .from('admin_users')
-                    .select('*')
-                    .eq('username', username)
-                    .eq('is_active', true)
-                    .limit(1);
+                // Call the secure admin_login database function
+                const { data, error } = await supabase.rpc('admin_login', {
+                    p_username: username,
+                    p_password_hash: hashedPassword
+                });
+                
+                console.log('Admin login function result:', { data, error });
                 
                 if (error) {
-                    console.error('Database error:', error);
-                    throw new Error('Database connection error');
+                    console.error('Database function error:', error);
+                    throw new Error('Login failed: ' + error.message);
                 }
                 
-                if (adminUsers && adminUsers.length > 0) {
-                    const admin = adminUsers[0];
+                // Check if login was successful (function returns user data if successful)
+                if (data && data.length > 0) {
+                    const admin = data[0];
+                    console.log('Login successful for user:', admin.username);
                     
-                    // Check password (in production, use proper password verification)
-                    if (admin.password_hash === hashedPassword || admin.password_hash === password) {
-                        console.log('Production login successful');
-                        currentAdminUser = admin;
-                        showDashboard();
-                        
-                        // Update last login time
-                        await supabase
-                            .from('admin_users')
-                            .update({ last_login: new Date().toISOString() })
-                            .eq('id', admin.id);
-                    } else {
-                        throw new Error('Invalid username or password');
-                    }
+                    currentAdminUser = {
+                        id: admin.id,
+                        username: admin.username,
+                        email: admin.email,
+                        full_name: admin.full_name,
+                        role: admin.role
+                    };
+                    
+                    showDashboard();
                 } else {
+                    console.log('Login failed - no user returned from function');
                     throw new Error('Invalid username or password');
                 }
                 
