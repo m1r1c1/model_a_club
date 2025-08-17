@@ -14,6 +14,9 @@
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Supabase JavaScript Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
         /* CSS Reset and Base Styles */
         * {
@@ -56,6 +59,43 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
+        }
+
+        /* Loading spinner for dynamic content */
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error message styling */
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        /* Success message styling */
+        .success-message {
+            background: #efe;
+            color: #393;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+            text-align: center;
         }
 
         /* Navigation Header Styles */
@@ -198,7 +238,7 @@
             box-shadow: var(--shadow-hover);
         }
 
-        /* Statistics section in hero */
+        /* Statistics section in hero - will be populated from database */
         .hero-stats {
             display: flex;
             justify-content: center;
@@ -328,12 +368,62 @@
             margin-top: 1rem;
             font-size: 0.9rem;
             color: #666;
+            flex-wrap: wrap;
         }
 
         .event-meta span {
             display: flex;
             align-items: center;
             gap: 0.3rem;
+        }
+
+        /* RSVP button for events */
+        .rsvp-button {
+            background: var(--accent-color);
+            color: var(--primary-color);
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 1rem;
+        }
+
+        .rsvp-button:hover {
+            background: #f4d03f;
+        }
+
+        /* News section for club announcements */
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .news-card {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .news-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .news-card h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .news-meta {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 1rem;
         }
 
         /* Gallery section for showcasing Model A cars */
@@ -360,13 +450,14 @@
 
         /* Placeholder for gallery images */
         .gallery-item::before {
-            content: 'Model A Photo';
+            content: attr(data-title);
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             color: #666;
             font-weight: 500;
+            text-align: center;
         }
 
         /* Membership signup form */
@@ -432,6 +523,12 @@
         .submit-btn:hover {
             background: var(--primary-color);
             transform: translateY(-2px);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
         }
 
         /* Footer styling */
@@ -558,6 +655,12 @@
             .section-title {
                 font-size: 2rem;
             }
+
+            /* Stack event meta vertically on mobile */
+            .event-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
         }
 
         /* Phone-specific responsive adjustments */
@@ -627,6 +730,7 @@
                     <li><a href="#home">Home</a></li>
                     <li><a href="#about">About</a></li>
                     <li><a href="#events">Events</a></li>
+                    <li><a href="#news">News</a></li>
                     <li><a href="#gallery">Gallery</a></li>
                     <li><a href="#membership">Join Us</a></li>
                     <li><a href="#contact">Contact</a></li>
@@ -648,14 +752,14 @@
                 <p>Preserving the legacy of America's beloved vintage automobile since 1985</p>
                 <a href="#membership" class="cta-button">Join Our Community</a>
                 
-                <!-- Club statistics display -->
+                <!-- Club statistics display - populated from database -->
                 <div class="hero-stats">
                     <div class="stat-item">
-                        <div class="stat-number">250+</div>
+                        <div class="stat-number" id="memberCount">0</div>
                         <div class="stat-label">Active Members</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number">48</div>
+                        <div class="stat-number" id="eventCount">0</div>
                         <div class="stat-label">Events This Year</div>
                     </div>
                     <div class="stat-item">
@@ -717,93 +821,36 @@
         </div>
     </section>
 
-    <!-- Upcoming events section -->
+    <!-- Upcoming events section - populated from database -->
     <section class="section" id="events">
         <div class="container">
             <h2 class="section-title">Upcoming Events</h2>
-            <div class="events-grid">
-                <!-- Monthly club meeting event -->
-                <div class="event-card">
-                    <div class="event-date">
-                        SAT, SEP 16
-                    </div>
-                    <div class="event-content">
-                        <h3>Monthly Club Meeting</h3>
-                        <p>Join us for our monthly gathering featuring a tech talk on carburetor maintenance and planning for our fall tour.</p>
-                        <div class="event-meta">
-                            <span><i class="fas fa-clock"></i> 10:00 AM</span>
-                            <span><i class="fas fa-map-marker-alt"></i> Community Center</span>
-                            <span><i class="fas fa-users"></i> All Members</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Fall scenic drive event -->
-                <div class="event-card">
-                    <div class="event-date">
-                        SUN, OCT 8
-                    </div>
-                    <div class="event-content">
-                        <h3>Fall Scenic Drive</h3>
-                        <p>Experience autumn colors on our annual fall tour through scenic country roads. Lunch stop at historic inn included.</p>
-                        <div class="event-meta">
-                            <span><i class="fas fa-clock"></i> 9:00 AM</span>
-                            <span><i class="fas fa-map-marker-alt"></i> Town Square</span>
-                            <span><i class="fas fa-users"></i> Open to Public</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Restoration workshop event -->
-                <div class="event-card">
-                    <div class="event-date">
-                        SAT, OCT 21
-                    </div>
-                    <div class="event-content">
-                        <h3>Restoration Workshop</h3>
-                        <p>Hands-on workshop covering engine rebuilding basics. Bring your questions and learn from our master mechanics.</p>
-                        <div class="event-meta">
-                            <span><i class="fas fa-clock"></i> 1:00 PM</span>
-                            <span><i class="fas fa-map-marker-alt"></i> Mike's Garage</span>
-                            <span><i class="fas fa-users"></i> Members Only</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Holiday car show event -->
-                <div class="event-card">
-                    <div class="event-date">
-                        SAT, DEC 2
-                    </div>
-                    <div class="event-content">
-                        <h3>Holiday Car Show</h3>
-                        <p>Annual holiday-themed car show featuring decorated Model A's. Prizes for best holiday spirit and people's choice.</p>
-                        <div class="event-meta">
-                            <span><i class="fas fa-clock"></i> 11:00 AM</span>
-                            <span><i class="fas fa-map-marker-alt"></i> City Park</span>
-                            <span><i class="fas fa-users"></i> Family Event</span>
-                        </div>
-                    </div>
-                </div>
+            <div id="eventsContainer">
+                <!-- Loading spinner while events load -->
+                <div class="loading-spinner"></div>
             </div>
         </div>
     </section>
 
-    <!-- Photo gallery section -->
+    <!-- Club news section - populated from database -->
+    <section class="section" id="news">
+        <div class="container">
+            <h2 class="section-title">Club News</h2>
+            <div id="newsContainer">
+                <!-- Loading spinner while news loads -->
+                <div class="loading-spinner"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Photo gallery section - populated from database -->
     <section class="section" id="gallery">
         <div class="container">
             <h2 class="section-title">Member Gallery</h2>
             <p class="text-center mb-3">Showcase of our members' beautiful Model A Fords and memorable club moments</p>
-            <div class="gallery-grid">
-                <!-- Placeholder gallery items - in production these would be actual images -->
-                <div class="gallery-item" onclick="openGalleryModal('1928 Tudor Sedan')"></div>
-                <div class="gallery-item" onclick="openGalleryModal('1929 Roadster')"></div>
-                <div class="gallery-item" onclick="openGalleryModal('Club Meeting')"></div>
-                <div class="gallery-item" onclick="openGalleryModal('Restoration Project')"></div>
-                <div class="gallery-item" onclick="openGalleryModal('Car Show Winners')"></div>
-                <div class="gallery-item" onclick="openGalleryModal('Summer Drive')"></div>
-                <div class="gallery-item" onclick="openGalleryModal('1930 Coupe')"></div>
-                <div class="gallery-item" onclick="openGalleryModal('Technical Workshop')"></div>
+            <div id="galleryContainer">
+                <!-- Loading spinner while gallery loads -->
+                <div class="loading-spinner"></div>
             </div>
         </div>
     </section>
@@ -814,19 +861,22 @@
             <h2 class="section-title">Join Our Community</h2>
             <p class="text-center mb-3">Become part of our passionate community of Model A Ford enthusiasts</p>
             
-            <!-- Membership application form -->
-            <form class="membership-form" onsubmit="handleMembershipSubmit(event)">
+            <!-- Membership application form - saves to database -->
+            <form class="membership-form" id="membershipForm">
                 <h3 class="text-center mb-3">Membership Application</h3>
+                
+                <!-- Message area for form feedback -->
+                <div id="formMessage"></div>
                 
                 <!-- Personal information fields -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="firstName">First Name *</label>
-                        <input type="text" id="firstName" name="firstName" required>
+                        <input type="text" id="firstName" name="first_name" required>
                     </div>
                     <div class="form-group">
                         <label for="lastName">Last Name *</label>
-                        <input type="text" id="lastName" name="lastName" required>
+                        <input type="text" id="lastName" name="last_name" required>
                     </div>
                 </div>
                 
@@ -843,7 +893,7 @@
                     </div>
                     <div class="form-group">
                         <label for="membershipType">Membership Type *</label>
-                        <select id="membershipType" name="membershipType" required>
+                        <select id="membershipType" name="membership_type" required>
                             <option value="">Select Type</option>
                             <option value="individual">Individual ($45/year)</option>
                             <option value="family">Family ($65/year)</option>
@@ -855,9 +905,9 @@
                 <!-- Model A ownership information -->
                 <div class="form-group">
                     <label for="modelAOwned">Do you currently own a Model A Ford?</label>
-                    <select id="modelAOwned" name="modelAOwned" onchange="toggleModelADetails()">
-                        <option value="no">No, but I'm interested</option>
-                        <option value="yes">Yes, I own one or more</option>
+                    <select id="modelAOwned" name="model_a_owned" onchange="toggleModelADetails()">
+                        <option value="false">No, but I'm interested</option>
+                        <option value="true">Yes, I own one or more</option>
                         <option value="restoring">Currently restoring one</option>
                     </select>
                 </div>
@@ -867,11 +917,11 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="modelYear">Model Year</label>
-                            <input type="text" id="modelYear" name="modelYear" placeholder="e.g., 1929">
+                            <input type="text" id="modelYear" name="model_year" placeholder="e.g., 1929">
                         </div>
                         <div class="form-group">
                             <label for="bodyStyle">Body Style</label>
-                            <input type="text" id="bodyStyle" name="bodyStyle" placeholder="e.g., Tudor Sedan">
+                            <input type="text" id="bodyStyle" name="body_style" placeholder="e.g., Tudor Sedan">
                         </div>
                     </div>
                 </div>
@@ -879,7 +929,7 @@
                 <!-- Experience and interests -->
                 <div class="form-group">
                     <label for="experience">Experience with Model A Fords</label>
-                    <select id="experience" name="experience">
+                    <select id="experience" name="experience_level">
                         <option value="beginner">New to Model A's</option>
                         <option value="intermediate">Some experience</option>
                         <option value="experienced">Very experienced</option>
@@ -895,7 +945,7 @@
                 <!-- How they heard about the club -->
                 <div class="form-group">
                     <label for="howHeard">How did you hear about our club?</label>
-                    <select id="howHeard" name="howHeard">
+                    <select id="howHeard" name="how_heard">
                         <option value="">Select an option</option>
                         <option value="website">Club website</option>
                         <option value="member">Current member referral</option>
@@ -909,7 +959,7 @@
                 <!-- Agreement and newsletter signup -->
                 <div class="form-group">
                     <label>
-                        <input type="checkbox" name="newsletter" checked> 
+                        <input type="checkbox" name="newsletter_signup" checked> 
                         Yes, I'd like to receive the monthly newsletter
                     </label>
                 </div>
@@ -922,7 +972,7 @@
                 </div>
                 
                 <!-- Submit button -->
-                <button type="submit" class="submit-btn">
+                <button type="submit" class="submit-btn" id="submitBtn">
                     <i class="fas fa-user-plus"></i> Submit Application
                 </button>
             </form>
@@ -1011,7 +1061,7 @@
                     <p><i class="fas fa-envelope"></i> info@modelaclub.org</p>
                     <p><i class="fas fa-phone"></i> (555) 123-4567</p>
                     <p><i class="fas fa-map-marker-alt"></i> 123 Main Street<br>Your City, ST 12345</p>
-                    <p><strong>Next Meeting:</strong><br>Saturday, September 16th<br>10:00 AM at Community Center</p>
+                    <p><strong>Next Meeting:</strong><br><span id="nextMeeting">Loading...</span></p>
                 </div>
             </div>
             
@@ -1025,8 +1075,531 @@
         </div>
     </footer>
 
-    <!-- JavaScript for interactive functionality -->
+    <!-- JavaScript for Supabase integration and interactive functionality -->
     <script>
+        // ===== SUPABASE CONFIGURATION =====
+        // IMPORTANT: Replace these with your actual Supabase credentials
+        const SUPABASE_URL = 'https://ndoqsbvsgfokkygqvole.supabase.co'; // Replace with your project URL
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // Replace with your anon key
+        
+        // Initialize Supabase client - this connects to your database
+        let supabase;
+        
+        // Function to check if Supabase credentials are configured
+        function isSupabaseConfigured() {
+            return SUPABASE_URL !== 'YOUR_SUPABASE_PROJECT_URL' && 
+                   SUPABASE_ANON_KEY !== 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kb3FzYnZzZ2Zva2t5Z3F2b2xlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NTA2NTAsImV4cCI6MjA3MTAyNjY1MH0._tMhn6v3pvyC7W6VnvVOm3Pr4Fnq5e-vt4My6jorR3w';
+        }
+        
+        // Initialize Supabase if credentials are provided
+        if (isSupabaseConfigured()) {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } else {
+            console.warn('Supabase credentials not configured. Using demo mode.');
+        }
+
+        // ===== DATABASE FUNCTIONS =====
+        
+        // Function to load upcoming events from the database
+        async function loadEvents() {
+            const container = document.getElementById('eventsContainer');
+            
+            try {
+                if (!isSupabaseConfigured()) {
+                    // Show demo events if database not configured
+                    displayDemoEvents(container);
+                    return;
+                }
+                
+                // Query events from database, ordered by date
+                const { data: events, error } = await supabase
+                    .from('events')
+                    .select('*')
+                    .gte('event_date', new Date().toISOString().split('T')[0]) // Only future events
+                    .order('event_date', { ascending: true })
+                    .limit(4); // Show only next 4 events
+                
+                if (error) throw error;
+                
+                // Clear loading spinner
+                container.innerHTML = '';
+                
+                if (events && events.length > 0) {
+                    // Create events grid and populate with data
+                    const eventsGrid = document.createElement('div');
+                    eventsGrid.className = 'events-grid';
+                    
+                    events.forEach(event => {
+                        const eventCard = createEventCard(event);
+                        eventsGrid.appendChild(eventCard);
+                    });
+                    
+                    container.appendChild(eventsGrid);
+                } else {
+                    // Show message if no events found
+                    container.innerHTML = '<p class="text-center">No upcoming events scheduled. Check back soon!</p>';
+                }
+                
+            } catch (error) {
+                console.error('Error loading events:', error);
+                container.innerHTML = '<div class="error-message">Error loading events. Please try again later.</div>';
+            }
+        }
+        
+        // Function to create an event card element from database data
+        function createEventCard(event) {
+            const card = document.createElement('div');
+            card.className = 'event-card';
+            
+            // Format the event date for display
+            const eventDate = new Date(event.event_date);
+            const formattedDate = eventDate.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric' 
+            }).toUpperCase();
+            
+            // Format the event time
+            const eventTime = event.event_time ? 
+                new Date(`1970-01-01T${event.event_time}`).toLocaleTimeString('en-US', { 
+                    hour: 'numeric', 
+                    minute: '2-digit', 
+                    hour12: true 
+                }) : 'Time TBD';
+            
+            card.innerHTML = `
+                <div class="event-date">${formattedDate}</div>
+                <div class="event-content">
+                    <h3>${event.title}</h3>
+                    <p>${event.description}</p>
+                    <div class="event-meta">
+                        <span><i class="fas fa-clock"></i> ${eventTime}</span>
+                        <span><i class="fas fa-map-marker-alt"></i> ${event.location}</span>
+                        <span><i class="fas fa-tag"></i> ${event.event_type}</span>
+                    </div>
+                    ${event.rsvp_required ? '<button class="rsvp-button" onclick="handleRSVP(' + event.id + ')">RSVP Required</button>' : ''}
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        // Function to load club news from the database
+        async function loadNews() {
+            const container = document.getElementById('newsContainer');
+            
+            try {
+                if (!isSupabaseConfigured()) {
+                    // Show demo news if database not configured
+                    displayDemoNews(container);
+                    return;
+                }
+                
+                // Query news from database, ordered by publish date
+                const { data: news, error } = await supabase
+                    .from('club_news')
+                    .select('*')
+                    .order('publish_date', { ascending: false })
+                    .limit(3); // Show latest 3 news items
+                
+                if (error) throw error;
+                
+                // Clear loading spinner
+                container.innerHTML = '';
+                
+                if (news && news.length > 0) {
+                    // Create news grid and populate with data
+                    const newsGrid = document.createElement('div');
+                    newsGrid.className = 'news-grid';
+                    
+                    news.forEach(article => {
+                        const newsCard = createNewsCard(article);
+                        newsGrid.appendChild(newsCard);
+                    });
+                    
+                    container.appendChild(newsGrid);
+                } else {
+                    // Show message if no news found
+                    container.innerHTML = '<p class="text-center">No recent news available.</p>';
+                }
+                
+            } catch (error) {
+                console.error('Error loading news:', error);
+                container.innerHTML = '<div class="error-message">Error loading news. Please try again later.</div>';
+            }
+        }
+        
+        // Function to create a news card element from database data
+        function createNewsCard(article) {
+            const card = document.createElement('div');
+            card.className = 'news-card';
+            
+            // Format the publish date for display
+            const publishDate = new Date(article.publish_date);
+            const formattedDate = publishDate.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            card.innerHTML = `
+                <h3>${article.title}</h3>
+                <div class="news-meta">
+                    <i class="fas fa-calendar"></i> ${formattedDate}
+                    ${article.author ? ` | <i class="fas fa-user"></i> ${article.author}` : ''}
+                </div>
+                <p>${article.content}</p>
+            `;
+            
+            return card;
+        }
+        
+        // Function to load photo gallery from the database
+        async function loadGallery() {
+            const container = document.getElementById('galleryContainer');
+            
+            try {
+                if (!isSupabaseConfigured()) {
+                    // Show demo gallery if database not configured
+                    displayDemoGallery(container);
+                    return;
+                }
+                
+                // Query photos from database
+                const { data: photos, error } = await supabase
+                    .from('photos')
+                    .select('*')
+                    .order('upload_date', { ascending: false })
+                    .limit(8); // Show latest 8 photos
+                
+                if (error) throw error;
+                
+                // Clear loading spinner
+                container.innerHTML = '';
+                
+                if (photos && photos.length > 0) {
+                    // Create gallery grid and populate with data
+                    const galleryGrid = document.createElement('div');
+                    galleryGrid.className = 'gallery-grid';
+                    
+                    photos.forEach(photo => {
+                        const galleryItem = createGalleryItem(photo);
+                        galleryGrid.appendChild(galleryItem);
+                    });
+                    
+                    container.appendChild(galleryGrid);
+                } else {
+                    // Show message if no photos found
+                    container.innerHTML = '<p class="text-center">No photos available yet. Be the first to share!</p>';
+                }
+                
+            } catch (error) {
+                console.error('Error loading gallery:', error);
+                container.innerHTML = '<div class="error-message">Error loading gallery. Please try again later.</div>';
+            }
+        }
+        
+        // Function to create a gallery item element from database data
+        function createGalleryItem(photo) {
+            const item = document.createElement('div');
+            item.className = 'gallery-item';
+            item.setAttribute('data-title', photo.title);
+            item.onclick = () => openGalleryModal(photo.title);
+            
+            // If image URL is provided, set as background image
+            if (photo.image_url || photo.thumbnail_url) {
+                const imageUrl = photo.thumbnail_url || photo.image_url;
+                item.style.backgroundImage = `url(${imageUrl})`;
+                item.style.backgroundSize = 'cover';
+                item.style.backgroundPosition = 'center';
+            }
+            
+            return item;
+        }
+        
+        // Function to get membership and event statistics for hero section
+        async function loadStatistics() {
+            try {
+                if (!isSupabaseConfigured()) {
+                    // Show demo stats if database not configured
+                    document.getElementById('memberCount').textContent = '250+';
+                    document.getElementById('eventCount').textContent = '48';
+                    return;
+                }
+                
+                // Get member count
+                const { count: memberCount, error: memberError } = await supabase
+                    .from('members')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'active');
+                
+                // Get this year's event count
+                const currentYear = new Date().getFullYear();
+                const { count: eventCount, error: eventError } = await supabase
+                    .from('events')
+                    .select('*', { count: 'exact', head: true })
+                    .gte('event_date', `${currentYear}-01-01`)
+                    .lte('event_date', `${currentYear}-12-31`);
+                
+                // Update statistics in hero section
+                if (!memberError) {
+                    document.getElementById('memberCount').textContent = memberCount + '+';
+                }
+                if (!eventError) {
+                    document.getElementById('eventCount').textContent = eventCount;
+                }
+                
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+                // Use default values if error occurs
+                document.getElementById('memberCount').textContent = '250+';
+                document.getElementById('eventCount').textContent = '48';
+            }
+        }
+        
+        // Function to get next meeting date for footer
+        async function loadNextMeeting() {
+            try {
+                if (!isSupabaseConfigured()) {
+                    document.getElementById('nextMeeting').textContent = 'Saturday, September 16th\n10:00 AM at Community Center';
+                    return;
+                }
+                
+                // Get next upcoming meeting
+                const { data: nextMeeting, error } = await supabase
+                    .from('events')
+                    .select('*')
+                    .eq('event_type', 'meeting')
+                    .gte('event_date', new Date().toISOString().split('T')[0])
+                    .order('event_date', { ascending: true })
+                    .limit(1);
+                
+                if (!error && nextMeeting && nextMeeting.length > 0) {
+                    const meeting = nextMeeting[0];
+                    const meetingDate = new Date(meeting.event_date);
+                    const formattedDate = meetingDate.toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
+                    
+                    const meetingTime = meeting.event_time ? 
+                        new Date(`1970-01-01T${meeting.event_time}`).toLocaleTimeString('en-US', { 
+                            hour: 'numeric', 
+                            minute: '2-digit', 
+                            hour12: true 
+                        }) : 'Time TBD';
+                    
+                    document.getElementById('nextMeeting').innerHTML = 
+                        `${formattedDate}<br>${meetingTime} at ${meeting.location}`;
+                } else {
+                    document.getElementById('nextMeeting').textContent = 'Check events page for details';
+                }
+                
+            } catch (error) {
+                console.error('Error loading next meeting:', error);
+                document.getElementById('nextMeeting').textContent = 'Check events page for details';
+            }
+        }
+        
+        // ===== FORM HANDLING =====
+        
+        // Function to handle membership form submission to database
+        async function handleMembershipSubmit(event) {
+            event.preventDefault(); // Prevent default form submission
+            
+            const form = event.target;
+            const submitBtn = document.getElementById('submitBtn');
+            const messageDiv = document.getElementById('formMessage');
+            
+            // Show loading state
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            submitBtn.disabled = true;
+            
+            try {
+                if (!isSupabaseConfigured()) {
+                    // Demo mode - show success message without saving
+                    messageDiv.innerHTML = '<div class="success-message">Demo Mode: Form would be saved to database with real Supabase credentials!</div>';
+                    form.reset();
+                    document.getElementById('modelADetails').style.display = 'none';
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
+                    return;
+                }
+                
+                // Collect form data
+                const formData = new FormData(form);
+                const memberData = {};
+                
+                // Convert FormData to object, handling checkboxes properly
+                for (let [key, value] of formData.entries()) {
+                    if (key === 'model_a_owned') {
+                        memberData[key] = value === 'true';
+                    } else if (key === 'newsletter_signup') {
+                        memberData[key] = true; // Checkbox was checked
+                    } else {
+                        memberData[key] = value || null;
+                    }
+                }
+                
+                // Handle unchecked newsletter checkbox
+                if (!formData.has('newsletter_signup')) {
+                    memberData.newsletter_signup = false;
+                }
+                
+                // Insert new member into database
+                const { data, error } = await supabase
+                    .from('members')
+                    .insert([memberData])
+                    .select();
+                
+                if (error) throw error;
+                
+                // Show success message
+                messageDiv.innerHTML = '<div class="success-message">Thank you for your membership application! We will review your submission and contact you within 2-3 business days.</div>';
+                
+                // Reset form
+                form.reset();
+                document.getElementById('modelADetails').style.display = 'none';
+                
+                // Scroll to success message
+                messageDiv.scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                console.error('Error submitting membership:', error);
+                messageDiv.innerHTML = '<div class="error-message">Sorry, there was an error submitting your application. Please try again or contact us directly.</div>';
+            } finally {
+                // Reset button state
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+            }
+        }
+        
+        // ===== DEMO MODE FUNCTIONS =====
+        
+        // Function to display demo events when database is not configured
+        function displayDemoEvents(container) {
+            container.innerHTML = `
+                <div class="events-grid">
+                    <div class="event-card">
+                        <div class="event-date">SAT, SEP 16</div>
+                        <div class="event-content">
+                            <h3>Monthly Club Meeting</h3>
+                            <p>Join us for our monthly gathering featuring a tech talk on carburetor maintenance and planning for our fall tour.</p>
+                            <div class="event-meta">
+                                <span><i class="fas fa-clock"></i> 10:00 AM</span>
+                                <span><i class="fas fa-map-marker-alt"></i> Community Center</span>
+                                <span><i class="fas fa-tag"></i> meeting</span>
+                            </div>
+                            <button class="rsvp-button" onclick="alert('Demo mode - RSVP would be saved to database')">RSVP Required</button>
+                        </div>
+                    </div>
+                    <div class="event-card">
+                        <div class="event-date">SUN, OCT 8</div>
+                        <div class="event-content">
+                            <h3>Fall Scenic Drive</h3>
+                            <p>Experience autumn colors on our annual fall tour through scenic country roads. Lunch stop at historic inn included.</p>
+                            <div class="event-meta">
+                                <span><i class="fas fa-clock"></i> 9:00 AM</span>
+                                <span><i class="fas fa-map-marker-alt"></i> Town Square</span>
+                                <span><i class="fas fa-tag"></i> tour</span>
+                            </div>
+                            <button class="rsvp-button" onclick="alert('Demo mode - RSVP would be saved to database')">RSVP Required</button>
+                        </div>
+                    </div>
+                    <div class="event-card">
+                        <div class="event-date">SAT, OCT 21</div>
+                        <div class="event-content">
+                            <h3>Restoration Workshop</h3>
+                            <p>Hands-on workshop covering engine rebuilding basics. Bring your questions and learn from our master mechanics.</p>
+                            <div class="event-meta">
+                                <span><i class="fas fa-clock"></i> 1:00 PM</span>
+                                <span><i class="fas fa-map-marker-alt"></i> Mike's Garage</span>
+                                <span><i class="fas fa-tag"></i> workshop</span>
+                            </div>
+                            <button class="rsvp-button" onclick="alert('Demo mode - RSVP would be saved to database')">RSVP Required</button>
+                        </div>
+                    </div>
+                    <div class="event-card">
+                        <div class="event-date">SAT, DEC 2</div>
+                        <div class="event-content">
+                            <h3>Holiday Car Show</h3>
+                            <p>Annual holiday-themed car show featuring decorated Model A's. Prizes for best holiday spirit and people's choice.</p>
+                            <div class="event-meta">
+                                <span><i class="fas fa-clock"></i> 11:00 AM</span>
+                                <span><i class="fas fa-map-marker-alt"></i> City Park</span>
+                                <span><i class="fas fa-tag"></i> show</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Function to display demo news when database is not configured
+        function displayDemoNews(container) {
+            container.innerHTML = `
+                <div class="news-grid">
+                    <div class="news-card">
+                        <h3>Welcome New Members!</h3>
+                        <div class="news-meta">
+                            <i class="fas fa-calendar"></i> August 15, 2025 | <i class="fas fa-user"></i> John Smith
+                        </div>
+                        <p>We're excited to welcome 5 new members this month to our Model A family. Don't forget to introduce yourselves at the next meeting!</p>
+                    </div>
+                    <div class="news-card">
+                        <h3>Parts Swap Meet Success</h3>
+                        <div class="news-meta">
+                            <i class="fas fa-calendar"></i> August 10, 2025 | <i class="fas fa-user"></i> Mike Johnson
+                        </div>
+                        <p>Thanks to everyone who participated in last weekend's parts swap meet. Over 200 items found new homes!</p>
+                    </div>
+                    <div class="news-card">
+                        <h3>Summer Tour Photos</h3>
+                        <div class="news-meta">
+                            <i class="fas fa-calendar"></i> July 28, 2025 | <i class="fas fa-user"></i> Sarah Davis
+                        </div>
+                        <p>Check out the amazing photos from our summer scenic drive! Thanks to all members who participated and shared their beautiful Model A's.</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Function to display demo gallery when database is not configured
+        function displayDemoGallery(container) {
+            container.innerHTML = `
+                <div class="gallery-grid">
+                    <div class="gallery-item" data-title="1928 Tudor Sedan" onclick="openGalleryModal('1928 Tudor Sedan')"></div>
+                    <div class="gallery-item" data-title="1929 Roadster" onclick="openGalleryModal('1929 Roadster')"></div>
+                    <div class="gallery-item" data-title="Club Meeting" onclick="openGalleryModal('Club Meeting')"></div>
+                    <div class="gallery-item" data-title="Restoration Project" onclick="openGalleryModal('Restoration Project')"></div>
+                    <div class="gallery-item" data-title="Car Show Winners" onclick="openGalleryModal('Car Show Winners')"></div>
+                    <div class="gallery-item" data-title="Summer Drive" onclick="openGalleryModal('Summer Drive')"></div>
+                    <div class="gallery-item" data-title="1930 Coupe" onclick="openGalleryModal('1930 Coupe')"></div>
+                    <div class="gallery-item" data-title="Technical Workshop" onclick="openGalleryModal('Technical Workshop')"></div>
+                </div>
+            `;
+        }
+        
+        // ===== EVENT HANDLERS =====
+        
+        // Handle RSVP button clicks
+        function handleRSVP(eventId) {
+            if (!isSupabaseConfigured()) {
+                alert('Demo mode - RSVP functionality would save to database with real Supabase credentials!');
+                return;
+            }
+            
+            // In a full implementation, this would:
+            // 1. Check if user is logged in
+            // 2. Show RSVP form or prompt for login
+            // 3. Save RSVP to database
+            alert('RSVP functionality would be implemented here with user authentication.');
+        }
+        
+        // ===== EXISTING MOBILE AND UI FUNCTIONS =====
+        
         // Mobile menu toggle functionality
         function toggleMobileMenu() {
             const menu = document.querySelector('.nav-menu');
@@ -1063,7 +1636,7 @@
             const details = document.getElementById('modelADetails');
             
             // Show details section if user owns or is restoring a Model A
-            if (select.value === 'yes' || select.value === 'restoring') {
+            if (select.value === 'true' || select.value === 'restoring') {
                 details.style.display = 'block';
                 // Make fields required when visible
                 document.getElementById('modelYear').required = true;
@@ -1074,36 +1647,6 @@
                 document.getElementById('modelYear').required = false;
                 document.getElementById('bodyStyle').required = false;
             }
-        }
-
-        // Handle membership form submission
-        function handleMembershipSubmit(event) {
-            event.preventDefault(); // Prevent actual form submission for demo
-            
-            const form = event.target;
-            const submitBtn = form.querySelector('.submit-btn');
-            
-            // Show loading state
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-            submitBtn.disabled = true;
-            
-            // Simulate form processing delay
-            setTimeout(() => {
-                // Show success message
-                alert('Thank you for your membership application! We will review your submission and contact you within 2-3 business days.');
-                
-                // Reset form and button
-                form.reset();
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-                
-                // Hide Model A details section
-                document.getElementById('modelADetails').style.display = 'none';
-                
-                // Scroll to top of form
-                form.scrollIntoView({ behavior: 'smooth' });
-            }, 2000);
         }
 
         // Gallery modal functionality (placeholder for future implementation)
@@ -1159,30 +1702,20 @@
             });
         });
 
-        // Newsletter signup functionality (if separate from membership form)
-        function handleNewsletterSignup(email) {
-            if (!email || !email.includes('@')) {
-                alert('Please enter a valid email address');
-                return;
-            }
-            
-            // Simulate newsletter signup
-            alert('Thank you for subscribing to our newsletter! You will receive our next monthly update with club news, events, and technical tips.');
-        }
-
         // Statistics counter animation (runs when page loads)
         function animateCounters() {
             const counters = document.querySelectorAll('.stat-number');
             
             counters.forEach(counter => {
-                const target = parseInt(counter.textContent.replace('+', ''));
+                const targetText = counter.textContent;
+                const target = parseInt(targetText.replace('+', ''));
                 const increment = target / 50; // Animation duration roughly 50 frames
                 let current = 0;
                 
                 const timer = setInterval(() => {
                     current += increment;
                     if (current >= target) {
-                        counter.textContent = counter.textContent.includes('+') ? target + '+' : target;
+                        counter.textContent = targetText; // Restore original text with +
                         clearInterval(timer);
                     } else {
                         counter.textContent = Math.floor(current);
@@ -1191,57 +1724,91 @@
             });
         }
 
+        // ===== PAGE INITIALIZATION =====
+        
+        // Initialize all content when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up form submission handler
+            const membershipForm = document.getElementById('membershipForm');
+            if (membershipForm) {
+                membershipForm.addEventListener('submit', handleMembershipSubmit);
+            }
+            
+            // Load all dynamic content from database
+            loadEvents();
+            loadNews();
+            loadGallery();
+            loadStatistics();
+            loadNextMeeting();
+            
+            // Show configuration warning if needed
+            if (!isSupabaseConfigured()) {
+                console.warn('🔧 SETUP REQUIRED: Please configure your Supabase credentials in the JavaScript section of this file.');
+                console.warn('📍 Look for SUPABASE_URL and SUPABASE_ANON_KEY variables and replace with your actual values.');
+                console.warn('📖 See the setup instructions for details on getting these values from your Supabase dashboard.');
+            }
+        });
+
         // Run counter animation when page loads
         window.addEventListener('load', () => {
             // Delay animation slightly to ensure everything is rendered
             setTimeout(animateCounters, 500);
         });
 
-        // Image lazy loading for gallery (future enhancement)
-        function setupLazyLoading() {
-            // This would be implemented when actual images are added
-            // Uses Intersection Observer API for performance
-            if ('IntersectionObserver' in window) {
-                const imageObserver = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            // Load the actual image when it comes into view
-                            const img = entry.target;
-                            // img.src = img.dataset.src; // Load real image
-                            imageObserver.unobserve(img);
-                        }
-                    });
-                });
-                
-                document.querySelectorAll('.gallery-item').forEach(item => {
-                    imageObserver.observe(item);
-                });
-            }
+        // ===== UTILITY FUNCTIONS =====
+        
+        // Function to format dates consistently across the application
+        function formatEventDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric' 
+            }).toUpperCase();
         }
-
-        // Event calendar integration (placeholder for future implementation)
-        function loadCalendarEvents() {
-            // This function would integrate with a calendar service
-            // to dynamically load and display upcoming events
-            console.log('Calendar integration ready for implementation');
+        
+        // Function to format times consistently across the application
+        function formatEventTime(timeString) {
+            if (!timeString) return 'Time TBD';
+            const time = new Date(`1970-01-01T${timeString}`);
+            return time.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit', 
+                hour12: true 
+            });
         }
-
-        // Search functionality for future content
-        function initializeSearch() {
-            // This would enable search across club content
-            // Including member directory, technical articles, etc.
-            console.log('Search functionality ready for implementation');
-        }
-
-        // Initialize all interactive features when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            setupLazyLoading();
-            loadCalendarEvents();
-            initializeSearch();
+        
+        // Function to handle errors consistently across the application
+        function handleError(error, context) {
+            console.error(`Error in ${context}:`, error);
             
-            // Log successful initialization
-            console.log('Ford Model A Club website fully loaded and interactive');
-        });
+            // In a production environment, you might want to:
+            // - Log errors to a service like Sentry
+            // - Show user-friendly error messages
+            // - Provide fallback content
+            
+            return `<div class="error-message">Unable to load ${context}. Please refresh the page or try again later.</div>`;
+        }
+        
+        // Function to show loading state while data is being fetched
+        function showLoadingState(container, message = 'Loading...') {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top: 1rem; color: #666;">${message}</p>
+                </div>
+            `;
+        }
+        
+        // Function to validate email addresses
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+        
+        // Log successful initialization
+        console.log('🚗 Ford Model A Club website loaded successfully!');
+        console.log('🔗 Database connection:', isSupabaseConfigured() ? 'Configured' : 'Demo mode');
     </script>
 </body>
 </html>
