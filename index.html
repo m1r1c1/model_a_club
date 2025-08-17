@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Meta tags for proper responsive behavior and SEO -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Join our Ford Model A car club for events, restoration tips, and community of vintage car enthusiasts">
+    <meta name="keywords" content="Ford Model A, vintage cars, car club, classic automobiles, restoration">
+    <title>Ford Model A Club - Classic Car Enthusiasts</title>
+    
+    <!-- Font imports for modern typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* CSS Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Root variables for consistent theming throughout the site */
+        :root {
+            --primary-color: #2c1810; /* Rich brown representing vintage leather */
+            --secondary-color: #8b4513; /* Classic car brown */
+            --accent-color: #d4af37; /* Gold accent for premium feel */
+            --text-color: #333;
+            --light-bg: #f8f6f3; /* Warm off-white */
+            --white: #ffffff;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-hover: 0 8px 25px rgba(0,0,0,0.2);
+            --border-radius: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        /* Base typography and body styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background: var(--white);
+        }
+
+        /* Heading styles using classic serif font */
+        h1, h2, h3 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        /* Container for consistent page width and centering */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Navigation Header Styles */
+        .header {
+            background: var(--white);
+            box-shadow: var(--shadow);
+            position: fixed; /* Fixed positioning for sticky navigation */
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000; /* High z-index to stay above other content */
+            transition: var(--transition);
+        }
+
+        /* Navigation container with flexbox layout */
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        /* Logo styling with vintage car theme */
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .logo i {
+            color: var(--secondary-color);
+            font-size: 2rem;
+        }
+
+        /* Desktop navigation menu */
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: var(--text-color);
+            font-weight: 500;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        /* Hover effect for navigation links */
+        .nav-menu a:hover {
+            color: var(--secondary-color);
+        }
+
+        .nav-menu a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background: var(--accent-color);
+            transition: var(--transition);
+        }
+
+        .nav-menu a:hover::after {
+            width: 100%;
+        }
+
+        /* Mobile menu toggle button */
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        /* Hero Section Styles */
+        .hero {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: var(--white);
+            padding: 120px 0 80px; /* Extra top padding to account for fixed header */
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Background pattern for visual interest */
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+            opacity: 0.1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            color: var(--white);
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        /* Call-to-action button styling */
+        .cta-button {
+            display: inline-block;
+            background: var(--accent-color);
+            color: var(--primary-color);
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+        }
+
+        .cta-button:hover {
+            background: #f4d03f;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        /* Statistics section in hero */
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Main content sections */
+        .section {
+            padding: 80px 0;
+        }
+
+        .section:nth-child(even) {
+            background: var(--light-bg);
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        /* Decorative underline for section titles */
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: var(--accent-color);
+        }
+
+        /* Grid layouts for various content sections */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        /* Feature card styling */
+        .feature-card {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .feature-card i {
+            font-size: 3rem;
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        /* Events section specific styling */
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .event-card {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .event-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        /* Event card header with date */
+        .event-date {
+            background: var(--secondary-color);
+            color: var(--white);
+            padding: 1rem;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .event-content {
+            padding: 1.5rem;
+        }
+
+        .event-content h3 {
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        .event-meta {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .event-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        /* Gallery section for showcasing Model A cars */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .gallery-item {
+            background: #ddd;
+            aspect-ratio: 4/3;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.05);
+        }
+
+        /* Placeholder for gallery images */
+        .gallery-item::before {
+            content: 'Model A Photo';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* Membership signup form */
+        .membership-form {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* Submit button styling */
+        .submit-btn {
+            background: var(--secondary-color);
+            color: var(--white);
+            padding: 15px 30px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        .submit-btn:hover {
+            background: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        /* Footer styling */
+        .footer {
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 3rem 0 1rem;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            color: var(--white);
+            margin-bottom: 1rem;
+        }
+
+        .footer-section p,
+        .footer-section a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            line-height: 1.8;
+        }
+
+        .footer-section a:hover {
+            color: var(--accent-color);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .social-links a {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: var(--secondary-color);
+            color: var(--white);
+            text-align: center;
+            line-height: 40px;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .social-links a:hover {
+            background: var(--accent-color);
+            color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1rem;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Responsive Design - Tablet Styles */
+        @media (max-width: 768px) {
+            /* Mobile navigation toggle becomes visible */
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            /* Hide desktop menu on mobile, show as mobile dropdown when toggled */
+            .nav-menu {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: var(--white);
+                flex-direction: column;
+                padding: 1rem 0;
+                box-shadow: var(--shadow);
+                transform: translateY(-100%);
+                opacity: 0;
+                visibility: hidden;
+                transition: var(--transition);
+            }
+
+            /* Show mobile menu when active class is added */
+            .nav-menu.active {
+                transform: translateY(0);
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .nav-menu li {
+                text-align: center;
+                padding: 0.5rem 0;
+            }
+
+            /* Adjust hero text size for mobile */
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
+            }
+
+            /* Stack hero stats vertically on mobile */
+            .hero-stats {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            /* Single column layout for form on mobile */
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            /* Adjust section padding for mobile */
+            .section {
+                padding: 60px 0;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+
+        /* Phone-specific responsive adjustments */
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 15px;
+            }
+
+            .hero {
+                padding: 100px 0 60px;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            /* Reduce card padding on small screens */
+            .feature-card,
+            .membership-form {
+                padding: 1.5rem;
+            }
+
+            /* Smaller gallery grid on phones */
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+
+        /* Utility classes for common styling needs */
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-2 {
+            margin-bottom: 1rem;
+        }
+
+        .mb-3 {
+            margin-bottom: 1.5rem;
+        }
+
+        /* Animation for smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Loading animation for interactive elements */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Fixed navigation header -->
+    <header class="header">
+        <div class="container">
+            <nav class="nav-container">
+                <!-- Logo with car icon -->
+                <a href="#" class="logo">
+                    <i class="fas fa-car-side"></i>
+                    <span>Model A Club</span>
+                </a>
+                
+                <!-- Desktop navigation menu -->
+                <ul class="nav-menu">
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#events">Events</a></li>
+                    <li><a href="#gallery">Gallery</a></li>
+                    <li><a href="#membership">Join Us</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+                
+                <!-- Mobile menu toggle button -->
+                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero section with club introduction -->
+    <section class="hero" id="home">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Ford Model A Club</h1>
+                <p>Preserving the legacy of America's beloved vintage automobile since 1985</p>
+                <a href="#membership" class="cta-button">Join Our Community</a>
+                
+                <!-- Club statistics display -->
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">250+</div>
+                        <div class="stat-label">Active Members</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">48</div>
+                        <div class="stat-label">Events This Year</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">38</div>
+                        <div class="stat-label">Years Active</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About section highlighting club features -->
+    <section class="section" id="about">
+        <div class="container">
+            <h2 class="section-title">Why Join Our Club?</h2>
+            <div class="features-grid">
+                <!-- Expert knowledge sharing feature -->
+                <div class="feature-card">
+                    <i class="fas fa-tools"></i>
+                    <h3>Expert Restoration Tips</h3>
+                    <p>Learn from experienced mechanics and restorers. Access our extensive library of technical resources, parts catalogs, and step-by-step guides.</p>
+                </div>
+                
+                <!-- Community events feature -->
+                <div class="feature-card">
+                    <i class="fas fa-calendar-alt"></i>
+                    <h3>Regular Events</h3>
+                    <p>Monthly meets, car shows, scenic drives, and technical workshops. Build lasting friendships with fellow Model A enthusiasts.</p>
+                </div>
+                
+                <!-- Parts and resources feature -->
+                <div class="feature-card">
+                    <i class="fas fa-search"></i>
+                    <h3>Parts & Resources</h3>
+                    <p>Connect with trusted suppliers, find rare parts through our network, and access our comprehensive resource directory.</p>
+                </div>
+                
+                <!-- Community support feature -->
+                <div class="feature-card">
+                    <i class="fas fa-users"></i>
+                    <h3>Supportive Community</h3>
+                    <p>Get help with projects, share your successes, and learn from members' decades of combined experience with Model A Fords.</p>
+                </div>
+                
+                <!-- Historical preservation feature -->
+                <div class="feature-card">
+                    <i class="fas fa-landmark"></i>
+                    <h3>Historical Preservation</h3>
+                    <p>Help preserve Model A history through documentation, storytelling, and maintaining these incredible machines for future generations.</p>
+                </div>
+                
+                <!-- Educational programs feature -->
+                <div class="feature-card">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h3>Educational Programs</h3>
+                    <p>Attend workshops on maintenance, restoration techniques, and Model A history. Perfect for beginners and experienced owners alike.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Upcoming events section -->
+    <section class="section" id="events">
+        <div class="container">
+            <h2 class="section-title">Upcoming Events</h2>
+            <div class="events-grid">
+                <!-- Monthly club meeting event -->
+                <div class="event-card">
+                    <div class="event-date">
+                        SAT, SEP 16
+                    </div>
+                    <div class="event-content">
+                        <h3>Monthly Club Meeting</h3>
+                        <p>Join us for our monthly gathering featuring a tech talk on carburetor maintenance and planning for our fall tour.</p>
+                        <div class="event-meta">
+                            <span><i class="fas fa-clock"></i> 10:00 AM</span>
+                            <span><i class="fas fa-map-marker-alt"></i> Community Center</span>
+                            <span><i class="fas fa-users"></i> All Members</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Fall scenic drive event -->
+                <div class="event-card">
+                    <div class="event-date">
+                        SUN, OCT 8
+                    </div>
+                    <div class="event-content">
+                        <h3>Fall Scenic Drive</h3>
+                        <p>Experience autumn colors on our annual fall tour through scenic country roads. Lunch stop at historic inn included.</p>
+                        <div class="event-meta">
+                            <span><i class="fas fa-clock"></i> 9:00 AM</span>
+                            <span><i class="fas fa-map-marker-alt"></i> Town Square</span>
+                            <span><i class="fas fa-users"></i> Open to Public</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Restoration workshop event -->
+                <div class="event-card">
+                    <div class="event-date">
+                        SAT, OCT 21
+                    </div>
+                    <div class="event-content">
+                        <h3>Restoration Workshop</h3>
+                        <p>Hands-on workshop covering engine rebuilding basics. Bring your questions and learn from our master mechanics.</p>
+                        <div class="event-meta">
+                            <span><i class="fas fa-clock"></i> 1:00 PM</span>
+                            <span><i class="fas fa-map-marker-alt"></i> Mike's Garage</span>
+                            <span><i class="fas fa-users"></i> Members Only</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Holiday car show event -->
+                <div class="event-card">
+                    <div class="event-date">
+                        SAT, DEC 2
+                    </div>
+                    <div class="event-content">
+                        <h3>Holiday Car Show</h3>
+                        <p>Annual holiday-themed car show featuring decorated Model A's. Prizes for best holiday spirit and people's choice.</p>
+                        <div class="event-meta">
+                            <span><i class="fas fa-clock"></i> 11:00 AM</span>
+                            <span><i class="fas fa-map-marker-alt"></i> City Park</span>
+                            <span><i class="fas fa-users"></i> Family Event</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Photo gallery section -->
+    <section class="section" id="gallery">
+        <div class="container">
+            <h2 class="section-title">Member Gallery</h2>
+            <p class="text-center mb-3">Showcase of our members' beautiful Model A Fords and memorable club moments</p>
+            <div class="gallery-grid">
+                <!-- Placeholder gallery items - in production these would be actual images -->
+                <div class="gallery-item" onclick="openGalleryModal('1928 Tudor Sedan')"></div>
+                <div class="gallery-item" onclick="openGalleryModal('1929 Roadster')"></div>
+                <div class="gallery-item" onclick="openGalleryModal('Club Meeting')"></div>
+                <div class="gallery-item" onclick="openGalleryModal('Restoration Project')"></div>
+                <div class="gallery-item" onclick="openGalleryModal('Car Show Winners')"></div>
+                <div class="gallery-item" onclick="openGalleryModal('Summer Drive')"></div>
+                <div class="gallery-item" onclick="openGalleryModal('1930 Coupe')"></div>
+                <div class="gallery-item" onclick="openGalleryModal('Technical Workshop')"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Membership signup section -->
+    <section class="section" id="membership">
+        <div class="container">
+            <h2 class="section-title">Join Our Community</h2>
+            <p class="text-center mb-3">Become part of our passionate community of Model A Ford enthusiasts</p>
+            
+            <!-- Membership application form -->
+            <form class="membership-form" onsubmit="handleMembershipSubmit(event)">
+                <h3 class="text-center mb-3">Membership Application</h3>
+                
+                <!-- Personal information fields -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">First Name *</label>
+                        <input type="text" id="firstName" name="firstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name *</label>
+                        <input type="text" id="lastName" name="lastName" required>
+                    </div>
+                </div>
+                
+                <!-- Contact information fields -->
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="membershipType">Membership Type *</label>
+                        <select id="membershipType" name="membershipType" required>
+                            <option value="">Select Type</option>
+                            <option value="individual">Individual ($45/year)</option>
+                            <option value="family">Family ($65/year)</option>
+                            <option value="student">Student ($25/year)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Model A ownership information -->
+                <div class="form-group">
+                    <label for="modelAOwned">Do you currently own a Model A Ford?</label>
+                    <select id="modelAOwned" name="modelAOwned" onchange="toggleModelADetails()">
+                        <option value="no">No, but I'm interested</option>
+                        <option value="yes">Yes, I own one or more</option>
+                        <option value="restoring">Currently restoring one</option>
+                    </select>
+                </div>
+                
+                <!-- Conditional Model A details (shown when user owns a Model A) -->
+                <div id="modelADetails" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="modelYear">Model Year</label>
+                            <input type="text" id="modelYear" name="modelYear" placeholder="e.g., 1929">
+                        </div>
+                        <div class="form-group">
+                            <label for="bodyStyle">Body Style</label>
+                            <input type="text" id="bodyStyle" name="bodyStyle" placeholder="e.g., Tudor Sedan">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Experience and interests -->
+                <div class="form-group">
+                    <label for="experience">Experience with Model A Fords</label>
+                    <select id="experience" name="experience">
+                        <option value="beginner">New to Model A's</option>
+                        <option value="intermediate">Some experience</option>
+                        <option value="experienced">Very experienced</option>
+                        <option value="expert">Expert level</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="interests">Areas of Interest (optional)</label>
+                    <textarea id="interests" name="interests" rows="3" placeholder="e.g., restoration, touring, showing, mechanical work, history"></textarea>
+                </div>
+                
+                <!-- How they heard about the club -->
+                <div class="form-group">
+                    <label for="howHeard">How did you hear about our club?</label>
+                    <select id="howHeard" name="howHeard">
+                        <option value="">Select an option</option>
+                        <option value="website">Club website</option>
+                        <option value="member">Current member referral</option>
+                        <option value="event">Attended an event</option>
+                        <option value="social">Social media</option>
+                        <option value="car-show">Car show</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <!-- Agreement and newsletter signup -->
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="newsletter" checked> 
+                        Yes, I'd like to receive the monthly newsletter
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="agreement" required> 
+                        I agree to the club bylaws and code of conduct *
+                    </label>
+                </div>
+                
+                <!-- Submit button -->
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-user-plus"></i> Submit Application
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Contact information section -->
+    <section class="section" id="contact">
+        <div class="container">
+            <h2 class="section-title">Contact Us</h2>
+            <div class="features-grid">
+                <!-- Club meeting location -->
+                <div class="feature-card">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <h3>Meeting Location</h3>
+                    <p>Community Center<br>
+                    123 Main Street<br>
+                    Your City, ST 12345<br>
+                    <em>Third Saturday of each month, 10:00 AM</em></p>
+                </div>
+                
+                <!-- Club leadership contact -->
+                <div class="feature-card">
+                    <i class="fas fa-user-tie"></i>
+                    <h3>Club President</h3>
+                    <p>John Smith<br>
+                    <a href="mailto:president@modelaclub.org">president@modelaclub.org</a><br>
+                    Phone: (555) 123-4567<br>
+                    <em>Available for questions about membership and events</em></p>
+                </div>
+                
+                <!-- Technical coordinator contact -->
+                <div class="feature-card">
+                    <i class="fas fa-wrench"></i>
+                    <h3>Technical Coordinator</h3>
+                    <p>Mike Johnson<br>
+                    <a href="mailto:tech@modelaclub.org">tech@modelaclub.org</a><br>
+                    Phone: (555) 987-6543<br>
+                    <em>Restoration questions and technical support</em></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer with additional links and information -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <!-- About the club footer section -->
+                <div class="footer-section">
+                    <h3>About Our Club</h3>
+                    <p>The Ford Model A Club has been bringing together enthusiasts of Henry Ford's successor to the Model T since 1985. We're dedicated to preserving, restoring, and enjoying these remarkable automobiles that helped shape American transportation history.</p>
+                    <div class="social-links">
+                        <a href="#" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" title="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" title="YouTube"><i class="fab fa-youtube"></i></a>
+                        <a href="#" title="Email"><i class="fas fa-envelope"></i></a>
+                    </div>
+                </div>
+                
+                <!-- Quick links footer section -->
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <p><a href="#events">Upcoming Events</a></p>
+                    <p><a href="#membership">Membership Info</a></p>
+                    <p><a href="#gallery">Photo Gallery</a></p>
+                    <p><a href="/newsletter">Newsletter Archive</a></p>
+                    <p><a href="/bylaws">Club Bylaws</a></p>
+                    <p><a href="/resources">Technical Resources</a></p>
+                </div>
+                
+                <!-- Resources footer section -->
+                <div class="footer-section">
+                    <h3>Model A Resources</h3>
+                    <p><a href="/parts-suppliers">Parts Suppliers</a></p>
+                    <p><a href="/restoration-guides">Restoration Guides</a></p>
+                    <p><a href="/maintenance-tips">Maintenance Tips</a></p>
+                    <p><a href="/history">Model A History</a></p>
+                    <p><a href="/technical-library">Technical Library</a></p>
+                    <p><a href="/swap-meet">Parts Swap Meet</a></p>
+                </div>
+                
+                <!-- Contact footer section -->
+                <div class="footer-section">
+                    <h3>Get In Touch</h3>
+                    <p><i class="fas fa-envelope"></i> info@modelaclub.org</p>
+                    <p><i class="fas fa-phone"></i> (555) 123-4567</p>
+                    <p><i class="fas fa-map-marker-alt"></i> 123 Main Street<br>Your City, ST 12345</p>
+                    <p><strong>Next Meeting:</strong><br>Saturday, September 16th<br>10:00 AM at Community Center</p>
+                </div>
+            </div>
+            
+            <!-- Copyright and additional footer info -->
+            <div class="footer-bottom">
+                <p>&copy; 2025 Ford Model A Club. All rights reserved. | 
+                <a href="/privacy">Privacy Policy</a> | 
+                <a href="/terms">Terms of Service</a> | 
+                <a href="/accessibility">Accessibility</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript for interactive functionality -->
+    <script>
+        // Mobile menu toggle functionality
+        function toggleMobileMenu() {
+            const menu = document.querySelector('.nav-menu');
+            const button = document.querySelector('.mobile-menu-toggle');
+            
+            // Toggle active class to show/hide mobile menu
+            menu.classList.toggle('active');
+            
+            // Change hamburger icon to X when menu is open
+            const icon = button.querySelector('i');
+            if (menu.classList.contains('active')) {
+                icon.className = 'fas fa-times';
+            } else {
+                icon.className = 'fas fa-bars';
+            }
+        }
+
+        // Close mobile menu when clicking on a menu link
+        document.querySelectorAll('.nav-menu a').forEach(link => {
+            link.addEventListener('click', () => {
+                const menu = document.querySelector('.nav-menu');
+                const button = document.querySelector('.mobile-menu-toggle');
+                const icon = button.querySelector('i');
+                
+                // Close menu and reset icon
+                menu.classList.remove('active');
+                icon.className = 'fas fa-bars';
+            });
+        });
+
+        // Show/hide Model A details based on ownership selection
+        function toggleModelADetails() {
+            const select = document.getElementById('modelAOwned');
+            const details = document.getElementById('modelADetails');
+            
+            // Show details section if user owns or is restoring a Model A
+            if (select.value === 'yes' || select.value === 'restoring') {
+                details.style.display = 'block';
+                // Make fields required when visible
+                document.getElementById('modelYear').required = true;
+                document.getElementById('bodyStyle').required = true;
+            } else {
+                details.style.display = 'none';
+                // Remove required attribute when hidden
+                document.getElementById('modelYear').required = false;
+                document.getElementById('bodyStyle').required = false;
+            }
+        }
+
+        // Handle membership form submission
+        function handleMembershipSubmit(event) {
+            event.preventDefault(); // Prevent actual form submission for demo
+            
+            const form = event.target;
+            const submitBtn = form.querySelector('.submit-btn');
+            
+            // Show loading state
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            submitBtn.disabled = true;
+            
+            // Simulate form processing delay
+            setTimeout(() => {
+                // Show success message
+                alert('Thank you for your membership application! We will review your submission and contact you within 2-3 business days.');
+                
+                // Reset form and button
+                form.reset();
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                
+                // Hide Model A details section
+                document.getElementById('modelADetails').style.display = 'none';
+                
+                // Scroll to top of form
+                form.scrollIntoView({ behavior: 'smooth' });
+            }, 2000);
+        }
+
+        // Gallery modal functionality (placeholder for future implementation)
+        function openGalleryModal(imageTitle) {
+            // In a real implementation, this would open a modal with the full-size image
+            alert(`Opening gallery image: ${imageTitle}\n\nIn a full implementation, this would display a modal with the selected image and navigation controls.`);
+        }
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    // Calculate offset to account for fixed header
+                    const headerHeight = document.querySelector('.header').offsetHeight;
+                    const targetPosition = target.offsetTop - headerHeight - 20;
+                    
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Add scroll effect to header (darken when scrolled)
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('.header');
+            if (window.scrollY > 100) {
+                header.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
+                header.style.backdropFilter = 'blur(10px)';
+            } else {
+                header.style.backgroundColor = '#ffffff';
+                header.style.backdropFilter = 'none';
+            }
+        });
+
+        // Form validation enhancements
+        document.querySelectorAll('input[required], select[required]').forEach(field => {
+            field.addEventListener('invalid', function(e) {
+                // Custom validation messages
+                if (this.validity.valueMissing) {
+                    this.setCustomValidity('This field is required');
+                } else if (this.validity.typeMismatch && this.type === 'email') {
+                    this.setCustomValidity('Please enter a valid email address');
+                }
+            });
+            
+            field.addEventListener('input', function() {
+                // Clear custom validation message when user starts typing
+                this.setCustomValidity('');
+            });
+        });
+
+        // Newsletter signup functionality (if separate from membership form)
+        function handleNewsletterSignup(email) {
+            if (!email || !email.includes('@')) {
+                alert('Please enter a valid email address');
+                return;
+            }
+            
+            // Simulate newsletter signup
+            alert('Thank you for subscribing to our newsletter! You will receive our next monthly update with club news, events, and technical tips.');
+        }
+
+        // Statistics counter animation (runs when page loads)
+        function animateCounters() {
+            const counters = document.querySelectorAll('.stat-number');
+            
+            counters.forEach(counter => {
+                const target = parseInt(counter.textContent.replace('+', ''));
+                const increment = target / 50; // Animation duration roughly 50 frames
+                let current = 0;
+                
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        counter.textContent = counter.textContent.includes('+') ? target + '+' : target;
+                        clearInterval(timer);
+                    } else {
+                        counter.textContent = Math.floor(current);
+                    }
+                }, 40); // Update every 40ms for smooth animation
+            });
+        }
+
+        // Run counter animation when page loads
+        window.addEventListener('load', () => {
+            // Delay animation slightly to ensure everything is rendered
+            setTimeout(animateCounters, 500);
+        });
+
+        // Image lazy loading for gallery (future enhancement)
+        function setupLazyLoading() {
+            // This would be implemented when actual images are added
+            // Uses Intersection Observer API for performance
+            if ('IntersectionObserver' in window) {
+                const imageObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            // Load the actual image when it comes into view
+                            const img = entry.target;
+                            // img.src = img.dataset.src; // Load real image
+                            imageObserver.unobserve(img);
+                        }
+                    });
+                });
+                
+                document.querySelectorAll('.gallery-item').forEach(item => {
+                    imageObserver.observe(item);
+                });
+            }
+        }
+
+        // Event calendar integration (placeholder for future implementation)
+        function loadCalendarEvents() {
+            // This function would integrate with a calendar service
+            // to dynamically load and display upcoming events
+            console.log('Calendar integration ready for implementation');
+        }
+
+        // Search functionality for future content
+        function initializeSearch() {
+            // This would enable search across club content
+            // Including member directory, technical articles, etc.
+            console.log('Search functionality ready for implementation');
+        }
+
+        // Initialize all interactive features when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            setupLazyLoading();
+            loadCalendarEvents();
+            initializeSearch();
+            
+            // Log successful initialization
+            console.log('Ford Model A Club website fully loaded and interactive');
+        });
+    </script>
+</body>
+</html>
