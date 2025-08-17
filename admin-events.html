@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Meta tags for proper responsive behavior and SEO -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events Management - Ford Model A Club Admin</title>
+    
+    <!-- Font imports for modern typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Supabase JavaScript Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        /* CSS Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Root variables for consistent theming throughout the admin panel */
+        :root {
+            --primary-color: #2c1810;
+            --secondary-color: #8b4513;
+            --accent-color: #d4af37;
+            --text-color: #333;
+            --light-bg: #f8f6f3;
+            --white: #ffffff;
+            --danger-color: #dc3545;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-hover: 0 8px 25px rgba(0,0,0,0.2);
+            --border-radius: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        /* Base typography and body styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background: var(--light-bg);
+            min-height: 100vh;
+        }
+
+        /* Heading styles using classic serif font */
+        h1, h2, h3 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        /* Container for consistent page width and centering */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Loading spinner for dynamic content */
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Message styling for success, error, warning, info */
+        .message {
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* Admin header with navigation */
+        .admin-header {
+            background: var(--white);
+            box-shadow: var(--shadow);
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .admin-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .admin-logo i {
+            color: var(--secondary-color);
+            font-size: 2rem;
+        }
+
+        /* Breadcrumb navigation */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #666;
+        }
+
+        .breadcrumb a {
+            color: var(--secondary-color);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        /* Main admin content area */
+        .admin-main {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        /* Page header with title and actions */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--light-bg);
+        }
+
+        .page-title {
+            margin: 0;
+        }
+
+        /* Button styling for admin actions */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: var(--secondary-color);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-color);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: var(--white);
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: var(--white);
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+            color: var(--primary-color);
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.875rem;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Data tables for displaying content */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .data-table th {
+            background: var(--light-bg);
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .data-table tr:hover {
+            background: #f9f9f9;
+        }
+
+        /* Action buttons in tables */
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Form styling for admin forms */
+        .admin-form {
+            max-width: 600px;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* Modal styling for edit/add dialogs */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal.show {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-hover);
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-close:hover {
+            color: var(--primary-color);
+        }
+
+        /* Responsive design for admin panel */
+        @media (max-width: 768px) {
+            .admin-nav {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .page-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+
+        /* Utility classes */
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-2 {
+            margin-bottom: 1rem;
+        }
+
+        .mb-3 {
+            margin-bottom: 1.5rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Admin header with navigation -->
+    <header class="admin-header">
+        <div class="container">
+            <nav class="admin-nav">
+                <a href="admin-dashboard.html" class="admin-logo">
+                    <i class="fas fa-car-side"></i>
+                    <span>Club Admin</span>
+                </a>
+                <div class="breadcrumb">
+                    <a href="admin-dashboard.html">Dashboard</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Events Management</span>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main admin content area -->
+    <div class="container">
+        <div class="admin-main">
+            <!-- Page header with title and actions -->
+            <div class="page-header">
+                <h1 class="page-title">Events Management</h1>
+                <button class="btn btn-success" onclick="showAddEventModal()">
+                    <i class="fas fa-plus"></i> Add Event
+                </button>
+            </div>
+            
+            <!-- Events content area -->
+            <div id="eventsContent">
+                <div class="loading-spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Modal (for adding/editing events) -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="eventModalTitle">Add Event</h3>
+                <button class="modal-close" onclick="closeModal('eventModal')">&times;</button>
+            </div>
+            
+            <form id="eventForm" class="admin-form">
+                <div id="eventFormMessage"></div>
+                
+                <div class="form-group">
+                    <label for="eventTitle">Event Title *</label>
+                    <input type="text" id="eventTitle" name="title" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="eventDescription">Description</label>
+                    <textarea id="eventDescription" name="description" rows="3" 
+                              placeholder="Describe the event details, what to bring, etc."></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventDate">Event Date *</label>
+                        <input type="date" id="eventDate" name="event_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventTime">Event Time</label>
+                        <input type="time" id="eventTime" name="event_time">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="eventLocation">Location</label>
+                    <input type="text" id="eventLocation" name="location" 
+                           placeholder="e.g., Community Center, Town Square">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventType">Event Type</label>
+                        <select id="eventType" name="event_type">
+                            <option value="meeting">Club Meeting</option>
+                            <option value="tour">Tour/Drive</option>
+                            <option value="workshop">Workshop</option>
+                            <option value="show">Car Show</option>
+                            <option value="social">Social Event</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="maxAttendees">Max Attendees</label>
+                        <input type="number" id="maxAttendees" name="max_attendees" min="1" 
+                               placeholder="Leave blank for unlimited">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="rsvpRequired" name="rsvp_required"> 
+                        RSVP Required
+                    </label>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-warning" onclick="closeModal('eventModal')">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="eventSubmitBtn">
+                        <i class="fas fa-save"></i> Save Event
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript for events management functionality -->
+    <script>
+        // ===== SUPABASE CONFIGURATION =====
+        // IMPORTANT: Replace these with your actual Supabase credentials
+        const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        
+        // Initialize Supabase client
+        let supabase;
+        let currentEditingId = null;
+
+        // Function to check if Supabase credentials are configured
+        function isSupabaseConfigured() {
+            return SUPABASE_URL !== 'YOUR_SUPABASE_PROJECT_URL' && 
+                   SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY';
+        }
+        
+        // Initialize Supabase if credentials are provided
+        if (isSupabaseConfigured()) {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } else {
+            console.warn('Supabase credentials not configured. Events management will run in demo mode.');
+        }
+
+        // ===== EVENTS MANAGEMENT FUNCTIONS =====
+        
+        // Function to load events for management
+        async function loadEvents() {
+            const container = document.getElementById('eventsContent');
+            
+            try {
+                if (!isSupabaseConfigured()) {
+                    // Show demo events if database not configured
+                    container.innerHTML = `
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Location</th>
+                                        <th>Type</th>
+                                        <th>RSVP</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Monthly Club Meeting</td>
+                                        <td>2025-09-16</td>
+                                        <td>10:00 AM</td>
+                                        <td>Community Center</td>
+                                        <td>meeting</td>
+                                        <td>Yes</td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn btn-sm btn-warning" onclick="alert('Demo mode')">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" onclick="alert('Demo mode')">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Fall Scenic Drive</td>
+                                        <td>2025-10-08</td>
+                                        <td>9:00 AM</td>
+                                        <td>Town Square</td>
+                                        <td>tour</td>
+                                        <td>Yes</td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn btn-sm btn-warning" onclick="alert('Demo mode')">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" onclick="alert('Demo mode')">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Get all events from database
+                const { data: events, error } = await supabase
+                    .from('events')
+                    .select('*')
+                    .order('event_date', { ascending: true });
+                
+                if (error) throw error;
+                
+                if (events && events.length > 0) {
+                    let tableHTML = `
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Location</th>
+                                        <th>Type</th>
+                                        <th>RSVP</th>
+                                        <th>Max Attendees</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    events.forEach(event => {
+                        const eventDate = new Date(event.event_date).toLocaleDateString();
+                        const eventTime = event.event_time ? 
+                            new Date(`1970-01-01T${event.event_time}`).toLocaleTimeString('en-US', { 
+                                hour: 'numeric', 
+                                minute: '2-digit', 
+                                hour12: true 
+                            }) : 'Not set';
+                        
+                        tableHTML += `
+                            <tr>
+                                <td><strong>${event.title}</strong></td>
+                                <td>${eventDate}</td>
+                                <td>${eventTime}</td>
+                                <td>${event.location || 'TBD'}</td>
+                                <td><span style="text-transform: capitalize;">${event.event_type}</span></td>
+                                <td>${event.rsvp_required ? '<span style="color: green;">Yes</span>' : '<span style="color: #666;">No</span>'}</td>
+                                <td>${event.max_attendees || 'Unlimited'}</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-warning" onclick="editEvent(${event.id})" title="Edit Event">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="deleteEvent(${event.id})" title="Delete Event">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tableHTML += '</tbody></table></div>';
+                    container.innerHTML = tableHTML;
+                } else {
+                    container.innerHTML = `
+                        <div class="text-center" style="padding: 3rem;">
+                            <i class="fas fa-calendar-alt" style="font-size: 4rem; color: #ddd; margin-bottom: 1rem;"></i>
+                            <h3 style="margin-bottom: 1rem;">No Events Found</h3>
+                            <p style="color: #666; margin-bottom: 2rem;">Get started by adding your first club event.</p>
+                            <button class="btn btn-success" onclick="showAddEventModal()">
+                                <i class="fas fa-plus"></i> Add First Event
+                            </button>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Error loading events:', error);
+                container.innerHTML = '<div class="message error">Error loading events. Please try again.</div>';
+            }
+        }
+        
+        // Function to show add event modal
+        function showAddEventModal() {
+            currentEditingId = null;
+            document.getElementById('eventModalTitle').textContent = 'Add New Event';
+            document.getElementById('eventForm').reset();
+            document.getElementById('eventFormMessage').innerHTML = '';
+            
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('eventDate').value = today;
+            
+            document.getElementById('eventModal').classList.add('show');
+        }
+        
+        // Function to edit an event
+        async function editEvent(eventId) {
+            if (!isSupabaseConfigured()) {
+                alert('Demo mode - would edit event with ID: ' + eventId);
+                return;
+            }
+            
+            try {
+                // Get event data
+                const { data: event, error } = await supabase
+                    .from('events')
+                    .select('*')
+                    .eq('id', eventId)
+                    .single();
+                
+                if (error) throw error;
+                
+                // Populate form with event data
+                currentEditingId = eventId;
+                document.getElementById('eventModalTitle').textContent = 'Edit Event';
+                document.getElementById('eventTitle').value = event.title;
+                document.getElementById('eventDescription').value = event.description || '';
+                document.getElementById('eventDate').value = event.event_date;
+                document.getElementById('eventTime').value = event.event_time || '';
+                document.getElementById('eventLocation').value = event.location || '';
+                document.getElementById('eventType').value = event.event_type;
+                document.getElementById('maxAttendees').value = event.max_attendees || '';
+                document.getElementById('rsvpRequired').checked = event.rsvp_required;
+                
+                document.getElementById('eventFormMessage').innerHTML = '';
+                document.getElementById('eventModal').classList.add('show');
+                
+            } catch (error) {
+                console.error('Error loading event for edit:', error);
+                alert('Error loading event data. Please try again.');
+            }
+        }
+        
+        // Function to delete an event
+        async function deleteEvent(eventId) {
+            if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) return;
+            
+            if (!isSupabaseConfigured()) {
+                alert('Demo mode - would delete event with ID: ' + eventId);
+                return;
+            }
+            
+            try {
+                const { error } = await supabase
+                    .from('events')
+                    .delete()
+                    .eq('id', eventId);
+                
+                if (error) throw error;
+                
+                // Show success message and reload events list
+                const container = document.getElementById('eventsContent');
+                container.innerHTML = '<div class="message success">Event deleted successfully!</div>';
+                
+                setTimeout(() => {
+                    loadEvents();
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error deleting event:', error);
+                alert('Error deleting event. Please try again.');
+            }
+        }
+        
+        // Function to handle event form submission
+        async function handleEventSubmit(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            const submitBtn = document.getElementById('eventSubmitBtn');
+            const messageDiv = document.getElementById('eventFormMessage');
+            
+            // Show loading state
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            submitBtn.disabled = true;
+            
+            try {
+                if (!isSupabaseConfigured()) {
+                    messageDiv.innerHTML = '<div class="message success">Demo mode - event would be saved to database!</div>';
+                    setTimeout(() => {
+                        closeModal('eventModal');
+                        loadEvents();
+                    }, 1500);
+                    return;
+                }
+                
+                // Validate required fields
+                if (!formData.get('title') || !formData.get('event_date')) {
+                    throw new Error('Please fill in all required fields');
+                }
+                
+                // Prepare event data
+                const eventData = {
+                    title: formData.get('title').trim(),
+                    description: formData.get('description')?.trim() || null,
+                    event_date: formData.get('event_date'),
+                    event_time: formData.get('event_time') || null,
+                    location: formData.get('location')?.trim() || null,
+                    event_type: formData.get('event_type'),
+                    max_attendees: formData.get('max_attendees') ? parseInt(formData.get('max_attendees')) : null,
+                    rsvp_required: formData.has('rsvp_required')
+                };
+                
+                let result;
+                if (currentEditingId) {
+                    // Update existing event
+                    eventData.updated_at = new Date().toISOString();
+                    result = await supabase
+                        .from('events')
+                        .update(eventData)
+                        .eq('id', currentEditingId);
+                } else {
+                    // Insert new event
+                    result = await supabase
+                        .from('events')
+                        .insert([eventData]);
+                }
+                
+                if (result.error) throw result.error;
+                
+                messageDiv.innerHTML = '<div class="message success">Event saved successfully!</div>';
+                
+                // Reload events and close modal after delay
+                setTimeout(() => {
+                    closeModal('eventModal');
+                    loadEvents();
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error saving event:', error);
+                messageDiv.innerHTML = `<div class="message error">Error saving event: ${error.message}</div>`;
+            } finally {
+                // Reset button state
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        // ===== MODAL MANAGEMENT FUNCTIONS =====
+        
+        // Function to close modals
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+            currentEditingId = null;
+        }
+        
+        // Close modal when clicking outside of it
+        window.addEventListener('click', function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('show');
+                currentEditingId = null;
+            }
+        });
+
+        // ===== UTILITY FUNCTIONS =====
+        
+        // Function to format dates consistently
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+        
+        // Function to format times consistently
+        function formatTime(timeString) {
+            if (!timeString) return 'Time not set';
+            const time = new Date(`1970-01-01T${timeString}`);
+            return time.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit', 
+                hour12: true 
+            });
+        }
+
+        // ===== INITIALIZATION =====
+        
+        // Initialize events management when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up form submission handler
+            document.getElementById('eventForm').addEventListener('submit', handleEventSubmit);
+            
+            // Load events data
+            loadEvents();
+            
+            // Show configuration warning if needed
+            if (!isSupabaseConfigured()) {
+                console.warn('🔧 SETUP REQUIRED: Please configure your Supabase credentials.');
+                console.warn('📍 Look for SUPABASE_URL and SUPABASE_ANON_KEY variables and replace with your actual values.');
+            }
+            
+            console.log('🗓️ Events Management page loaded successfully!');
+            console.log('🔗 Database connection:', isSupabaseConfigured() ? 'Configured' : 'Demo mode');
+        });
+    </script>
+</body>
+</html>
