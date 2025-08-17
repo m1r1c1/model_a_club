@@ -1080,7 +1080,7 @@
         // ===== SUPABASE CONFIGURATION =====
         // IMPORTANT: Replace these with your actual Supabase credentials
         const SUPABASE_URL = 'https://ndoqsbvsgfokkygqvole.supabase.co'; // Replace with your project URL
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // Replace with your anon key
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kb3FzYnZzZ2Zva2t5Z3F2b2xlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NTA2NTAsImV4cCI6MjA3MTAyNjY1MH0._tMhn6v3pvyC7W6VnvVOm3Pr4Fnq5e-vt4My6jorR3w'; // Replace with your anon key
         
         // Initialize Supabase client - this connects to your database
         let supabase;
@@ -1088,7 +1088,7 @@
         // Function to check if Supabase credentials are configured
         function isSupabaseConfigured() {
             return SUPABASE_URL !== 'YOUR_SUPABASE_PROJECT_URL' && 
-                   SUPABASE_ANON_KEY !== 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kb3FzYnZzZ2Zva2t5Z3F2b2xlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NTA2NTAsImV4cCI6MjA3MTAyNjY1MH0._tMhn6v3pvyC7W6VnvVOm3Pr4Fnq5e-vt4My6jorR3w';
+                   SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY';
         }
         
         // Initialize Supabase if credentials are provided
