@@ -261,10 +261,10 @@
                 const hashedPassword = await hashPassword(password);
                 console.log('Calling admin_login function...');
                 
-                // Call the secure admin_login database function
-                const { data, error } = await supabase.rpc('admin_login', {
+                // Call the flexible function with just the plain password
+                const { data, error } = await supabase.rpc('admin_login_flexible', {
                     p_username: username,
-                    p_password_hash: hashedPassword
+                    p_password: password
                 });
                 
                 console.log('Admin login function result:', { data, error });
