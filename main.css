@@ -779,3 +779,12 @@
         break-inside: avoid;
     }
 }
+
+/* Or use a CSS variable for consistency */
+:root {
+    --header-height: 80px; /* Set your actual header height */
+}
+
+.main-content {
+    padding-top: calc(var(--header-height) + 20px); /* Header height + some spacing */
+}
