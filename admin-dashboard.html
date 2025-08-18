@@ -16,12 +16,10 @@
     <link rel="stylesheet" href="styles.css">      <!-- Base shared styles -->
     <link rel="stylesheet" href="admin.css">       <!-- Admin panel styles -->
     
-    <!-- JavaScript Libraries -->
+    <!-- JavaScript Libraries and Configuration -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>              <!-- Shared configuration -->
-    <script src="session.js"></script>              <!-- Shared configuration -->
-    <script src="session_all"></script>              <!-- Shared configuration -->
-    <script src="session_dashboard"></script>              <!-- Shared configuration -->
+    <script src="admin-session.js"></script>       <!-- NEW: Session management -->
     
 </head>
 <body>
@@ -71,8 +69,8 @@
                         <span>Club Admin Dashboard</span>
                     </div>
                     <div class="admin-user">
-                        <span>Welcome, <strong id="currentUser">Admin</strong></span>
-                        <button class="logout-btn" onclick="logout()">
+                        <span>Welcome, <strong id="currentUser" class="admin-user-name">Admin</strong></span>
+                        <button class="logout-btn" onclick="handleLogout()">
                             <i class="fas fa-sign-out-alt"></i> Logout
                         </button>
                     </div>
@@ -190,13 +188,13 @@
     <script>
         // ===== INITIALIZE SUPABASE USING SHARED CONFIG =====
         let supabase = initializeSupabase();
-        
-        // Global variable for admin session management
-        let currentAdminUser = null;
 
         // ===== DEBUG INFORMATION =====
         
-        // Function to show debug information for troubleshooting
+        /**
+         * Show debug information for troubleshooting
+         * Displays current mode and demo credentials if applicable
+         */
         function showDebugInfo() {
             const debugDiv = document.getElementById('debugInfo');
             const isConfigured = isSupabaseConfigured();
@@ -213,7 +211,11 @@
 
         // ===== AUTHENTICATION FUNCTIONS =====
         
-        // Function to handle admin login with improved error handling
+        /**
+         * Handle admin login form submission with improved error handling
+         * Integrates with AdminSessionManager for persistent authentication
+         * @param {Event} event - Form submission event
+         */
         async function handleLogin(event) {
             event.preventDefault();
             
@@ -239,27 +241,41 @@
             
             try {
                 if (!isSupabaseConfigured()) {
-                    // Demo mode
+                    // Demo mode authentication
                     const demoCredentials = getDemoCredentials();
                     if (username === demoCredentials.username && password === demoCredentials.password) {
-                        currentAdminUser = { 
+                        const demoUser = { 
+                            id: 1,
                             username: demoCredentials.username, 
                             full_name: 'Demo Admin', 
-                            role: 'admin' 
+                            role: 'admin',
+                            email: 'demo@modelaclub.com'
                         };
-                        showDashboard();
+                        
+                        // Create persistent session using AdminSessionManager
+                        const sessionCreated = adminSession.createSession(demoUser);
+                        
+                        if (sessionCreated) {
+                            adminSession.showAdminContent();
+                            loadDashboardStats();
+                            loadRecentActivity();
+                            console.log('✅ Demo login successful');
+                        } else {
+                            throw new Error('Failed to create demo session');
+                        }
+                        
                         return;
                     } else {
                         throw new Error(`Demo credentials: ${demoCredentials.username} / ${demoCredentials.password}`);
                     }
                 }
                 
-                // Production mode
+                // Production mode authentication
                 if (!supabase) {
                     throw new Error('Database connection not available');
                 }
                 
-                // First, let's see what's actually in the database
+                // Check database for user credentials
                 console.log('Checking database for user...');
                 const { data: dbCheck, error: dbError } = await supabase
                     .from('admin_users')
@@ -279,38 +295,36 @@
                 const storedUser = dbCheck[0];
                 console.log('Found user in database:', storedUser);
                 
-                // Try different password approaches
+                // Try authentication with different password approaches
                 const hashedPassword = await hashPassword(password);
                 console.log('Generated hash:', hashedPassword);
                 console.log('Stored hash:', storedUser.password_hash);
                 
-                // Test 1: Try with generated hash
-                console.log('Test 1: Trying with generated hash...');
+                // Attempt authentication using database function
                 let { data, error } = await supabase.rpc('admin_login_simple', {
                     p_username: username,
                     p_password_hash: hashedPassword
                 });
                 
-                console.log('Hash test result:', { data, error });
+                console.log('Authentication result:', { data, error });
                 
-                // Test 2: Try with stored hash (in case our hash generation is wrong)
+                // Try alternative authentication methods if first attempt fails
                 if (!data || data.length === 0) {
-                    console.log('Test 2: Trying with stored hash...');
+                    console.log('Trying alternative authentication methods...');
+                    
+                    // Try with stored hash
                     ({ data, error } = await supabase.rpc('admin_login_simple', {
                         p_username: username,
                         p_password_hash: storedUser.password_hash
                     }));
-                    console.log('Stored hash test result:', { data, error });
-                }
-                
-                // Test 3: Try with plain password
-                if (!data || data.length === 0) {
-                    console.log('Test 3: Trying with plain password...');
-                    ({ data, error } = await supabase.rpc('admin_login_simple', {
-                        p_username: username,
-                        p_password_hash: password
-                    }));
-                    console.log('Plain password test result:', { data, error });
+                    
+                    // Try with plain password if hash doesn't work
+                    if (!data || data.length === 0) {
+                        ({ data, error } = await supabase.rpc('admin_login_simple', {
+                            p_username: username,
+                            p_password_hash: password
+                        }));
+                    }
                 }
                 
                 if (error) {
@@ -321,7 +335,7 @@
                     const admin = data[0];
                     console.log('Login successful!', admin);
                     
-                    currentAdminUser = {
+                    const authenticatedUser = {
                         id: admin.id,
                         username: admin.username,
                         email: admin.email,
@@ -329,23 +343,38 @@
                         role: admin.role
                     };
                     
-                    showDashboard();
+                    // Create persistent session using AdminSessionManager
+                    const sessionCreated = adminSession.createSession(authenticatedUser);
+                    
+                    if (sessionCreated) {
+                        adminSession.showAdminContent();
+                        loadDashboardStats();
+                        loadRecentActivity();
+                        console.log('✅ Production login successful');
+                    } else {
+                        throw new Error('Failed to create user session');
+                    }
                 } else {
                     console.log('All login attempts failed');
-                    throw new Error(`Login failed. Expected password hash: ${storedUser.password_hash}`);
+                    throw new Error(`Login failed. Check your credentials.`);
                 }
                 
             } catch (error) {
                 console.error('Login error:', error);
                 messageDiv.innerHTML = `<div class="message error">${error.message}</div>`;
             } finally {
-                // Reset button state
+                // Reset button state regardless of outcome
                 loginBtn.innerHTML = originalBtnText;
                 loginBtn.disabled = false;
             }
         }
         
-        // Simple password hashing function (use proper bcrypt in production)
+        /**
+         * Simple password hashing function for demo purposes
+         * Note: Use proper bcrypt or similar in production
+         * @param {string} password - Plain text password to hash
+         * @returns {Promise<string>} - Hashed password string
+         */
         async function hashPassword(password) {
             const encoder = new TextEncoder();
             const data = encoder.encode(password + 'salt123'); // Add proper salt in production
@@ -354,35 +383,35 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
         
-        // Function to show the admin dashboard after successful login
-        function showDashboard() {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('adminDashboard').classList.remove('hidden');
-            document.getElementById('currentUser').textContent = currentAdminUser.full_name || currentAdminUser.username;
-            
-            // Load dashboard data
-            loadDashboardStats();
-            loadRecentActivity();
-            
-            console.log('Dashboard loaded for user:', currentAdminUser.username);
-        }
-        
-        // Function to handle admin logout
-        function logout() {
+        /**
+         * Handle admin logout using AdminSessionManager
+         * Clears persistent session and redirects appropriately
+         */
+        function handleLogout() {
             if (confirm('Are you sure you want to logout?')) {
-                console.log('User logged out');
-                currentAdminUser = null;
-                document.getElementById('loginScreen').classList.remove('hidden');
-                document.getElementById('adminDashboard').classList.add('hidden');
+                console.log('User requested logout');
+                
+                // Use AdminSessionManager to handle logout
+                adminSession.logout(false); // Don't redirect, just clear session
+                
+                // Reset form and show login screen
                 document.getElementById('loginForm').reset();
                 document.getElementById('loginMessage').innerHTML = '';
                 document.getElementById('debugInfo').innerHTML = '';
+                
+                // Show login form and hide dashboard
+                adminSession.showLoginForm();
+                
+                console.log('✅ Logout completed');
             }
         }
 
         // ===== DASHBOARD DATA FUNCTIONS =====
         
-        // Function to load dashboard statistics using shared configuration
+        /**
+         * Load dashboard statistics using shared configuration
+         * Displays member, event, news, and photo counts
+         */
         async function loadDashboardStats() {
             try {
                 if (!isSupabaseConfigured()) {
@@ -394,7 +423,7 @@
                     return;
                 }
                 
-                // Get member count
+                // Get member count from database
                 const { count: memberCount } = await supabase
                     .from('members')
                     .select('*', { count: 'exact', head: true });
@@ -415,7 +444,7 @@
                     .from('photos')
                     .select('*', { count: 'exact', head: true });
                 
-                // Update dashboard stats
+                // Update dashboard stats display
                 document.getElementById('memberCount').textContent = memberCount || 0;
                 document.getElementById('eventCount').textContent = eventCount || 0;
                 document.getElementById('newsCount').textContent = newsCount || 0;
@@ -423,7 +452,7 @@
                 
             } catch (error) {
                 console.error('Error loading dashboard stats:', error);
-                // Use fallback values
+                // Use fallback values if database query fails
                 document.getElementById('memberCount').textContent = '0';
                 document.getElementById('eventCount').textContent = '0';
                 document.getElementById('newsCount').textContent = '0';
@@ -431,7 +460,10 @@
             }
         }
         
-        // Function to load recent activity for dashboard using shared utilities
+        /**
+         * Load recent activity for dashboard using shared utilities
+         * Shows recent member applications, events, and news articles
+         */
         async function loadRecentActivity() {
             const container = document.getElementById('recentActivity');
             
@@ -443,21 +475,21 @@
                     return;
                 }
                 
-                // Get recent members (last 3)
+                // Get recent members (last 3 applications)
                 const { data: recentMembers } = await supabase
                     .from('members')
                     .select('first_name, last_name, created_at')
                     .order('created_at', { ascending: false })
                     .limit(3);
                 
-                // Get recent events (last 2)
+                // Get recent events (last 2 created)
                 const { data: recentEvents } = await supabase
                     .from('events')
                     .select('title, created_at')
                     .order('created_at', { ascending: false })
                     .limit(2);
                 
-                // Get recent news (last 2)
+                // Get recent news (last 2 articles)
                 const { data: recentNews } = await supabase
                     .from('club_news')
                     .select('title, created_at')
@@ -467,7 +499,7 @@
                 // Build activity feed using shared utility functions
                 let activityHTML = '';
                 
-                // Add recent members
+                // Add recent member applications to activity feed
                 if (recentMembers) {
                     recentMembers.forEach(member => {
                         const timeAgo = getTimeAgo(member.created_at);
@@ -486,7 +518,7 @@
                     });
                 }
                 
-                // Add recent events
+                // Add recent event creations to activity feed
                 if (recentEvents) {
                     recentEvents.forEach(event => {
                         const timeAgo = getTimeAgo(event.created_at);
@@ -505,7 +537,7 @@
                     });
                 }
                 
-                // Add recent news
+                // Add recent news publications to activity feed
                 if (recentNews) {
                     recentNews.forEach(article => {
                         const timeAgo = getTimeAgo(article.created_at);
@@ -524,6 +556,7 @@
                     });
                 }
                 
+                // Display activity feed or show empty state
                 container.innerHTML = activityHTML || '<p class="text-center">No recent activity.</p>';
                 
             } catch (error) {
@@ -532,11 +565,15 @@
             }
         }
         
-        // Function to display demo activity data
+        /**
+         * Display demo activity data for demonstration purposes
+         * @param {HTMLElement} container - Container element for activity display
+         * @param {Object} demoData - Demo data object with members, events, and news
+         */
         function displayDemoActivity(container, demoData) {
             let activityHTML = '';
             
-            // Add demo members
+            // Add demo member applications (limit to 2 for dashboard)
             demoData.members.slice(0, 2).forEach(member => {
                 const timeAgo = getTimeAgo(member.created_at);
                 activityHTML += `
@@ -553,7 +590,7 @@
                 `;
             });
             
-            // Add demo events
+            // Add demo event creations (limit to 1 for dashboard)
             demoData.events.slice(0, 1).forEach(event => {
                 const timeAgo = getTimeAgo(event.created_at);
                 activityHTML += `
@@ -570,7 +607,7 @@
                 `;
             });
             
-            // Add demo news
+            // Add demo news publications (limit to 1 for dashboard)
             demoData.news.slice(0, 1).forEach(article => {
                 const timeAgo = getTimeAgo(article.created_at);
                 activityHTML += `
@@ -590,19 +627,34 @@
             container.innerHTML = activityHTML;
         }
 
-        // ===== INITIALIZATION =====
+        // ===== PAGE INITIALIZATION =====
         
-        // Initialize admin dashboard when DOM is loaded
+        /**
+         * Initialize admin dashboard when DOM is loaded
+         * Sets up authentication checking and form handlers
+         */
         document.addEventListener('DOMContentLoaded', function() {
             // Set up form submission handler
             document.getElementById('loginForm').addEventListener('submit', handleLogin);
             
-            // Show debug information
+            // Show debug information for troubleshooting
             showDebugInfo();
             
-            // Configuration is already loaded and logged by config.js
+            // Check if user is already authenticated via AdminSessionManager
+            if (adminSession.isAuthenticated()) {
+                console.log('✅ User already authenticated, showing dashboard');
+                adminSession.showAdminContent();
+                loadDashboardStats();
+                loadRecentActivity();
+            } else {
+                console.log('❌ User not authenticated, showing login form');
+                adminSession.showLoginForm();
+            }
+            
+            // Log configuration status
             console.log('🔧 Ford Model A Club Admin Dashboard loaded successfully!');
             console.log('🔗 Database connection:', isSupabaseConfigured() ? 'Configured' : 'Demo mode');
+            console.log('🔐 Session management: Active');
             
             // Auto-fill demo credentials in demo mode for easier testing
             if (!isSupabaseConfigured()) {
