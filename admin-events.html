@@ -12,18 +12,14 @@
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- CSS FILES -->
+    <!-- CSS FILES - Load in correct order -->
     <link rel="stylesheet" href="styles.css">     <!-- Base styles -->
     <link rel="stylesheet" href="admin.css">      <!-- Admin styles -->
     
-    <!-- Supabase JavaScript Client -->
+    <!-- JavaScript Libraries and Configuration -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <!-- IMPORTANT: Load shared configuration first -->
-    <script src="config.js"></script>
-    <script src="session.js"></script>              <!-- Shared configuration -->
-    <script src="session_all"></script>              <!-- Shared configuration -->
-    <script src="session_other"></script>              <!-- Shared configuration -->
+    <script src="config.js"></script>              <!-- Shared configuration -->
+    <script src="admin-session.js"></script>       <!-- Session management -->
     
 </head>
 <body>
@@ -39,6 +35,12 @@
                     <a href="admin-dashboard.html">Dashboard</a>
                     <i class="fas fa-chevron-right"></i>
                     <span>Events Management</span>
+                </div>
+                <div class="admin-user">
+                    <span>Welcome, <strong class="admin-user-name">Admin</strong></span>
+                    <button class="logout-btn" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
                 </div>
             </nav>
         </div>
@@ -141,10 +143,48 @@
     <script>
         // ===== SUPABASE CONFIGURATION =====
         let supabase = initializeSupabase();
+        
+        // Global variable to track which event is being edited
+        let currentEditingId = null;
+
+        // ===== AUTHENTICATION CHECK =====
+        
+        /**
+         * Check authentication status on page load
+         * Redirects to login if user is not authenticated
+         */
+        function checkAuthentication() {
+            if (!adminSession.isAuthenticated()) {
+                console.log('❌ User not authenticated, redirecting to login');
+                window.location.href = 'admin-dashboard.html';
+                return false;
+            }
+            
+            console.log('✅ User authenticated:', adminSession.getCurrentUser().username);
+            
+            // Update user display
+            adminSession.updateUserDisplay();
+            
+            return true;
+        }
+        
+        /**
+         * Handle logout from events page
+         * Uses AdminSessionManager to clear session and redirect
+         */
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                console.log('User requested logout from events page');
+                adminSession.logout(true); // Redirect to dashboard after logout
+            }
+        }
 
         // ===== EVENTS MANAGEMENT FUNCTIONS =====
         
-        // Function to load events for management
+        /**
+         * Load events for management interface
+         * Displays events in a table format with edit and delete actions
+         */
         async function loadEvents() {
             const container = document.getElementById('eventsContent');
             
@@ -236,6 +276,7 @@
                                 <tbody>
                     `;
                     
+                    // Build table rows for each event
                     events.forEach(event => {
                         const eventDate = new Date(event.event_date).toLocaleDateString();
                         const eventTime = event.event_time ? 
@@ -271,6 +312,7 @@
                     tableHTML += '</tbody></table></div>';
                     container.innerHTML = tableHTML;
                 } else {
+                    // Show empty state when no events exist
                     container.innerHTML = `
                         <div class="text-center" style="padding: 3rem;">
                             <i class="fas fa-calendar-alt" style="font-size: 4rem; color: #ddd; margin-bottom: 1rem;"></i>
@@ -289,8 +331,18 @@
             }
         }
         
-        // Function to show add event modal
+        /**
+         * Show modal for adding a new event
+         * Resets form and sets up for new event creation
+         */
         function showAddEventModal() {
+            // Verify user is still authenticated before allowing event creation
+            if (!adminSession.isAuthenticated()) {
+                alert('Your session has expired. Please log in again.');
+                window.location.href = 'admin-dashboard.html';
+                return;
+            }
+            
             currentEditingId = null;
             document.getElementById('eventModalTitle').textContent = 'Add New Event';
             document.getElementById('eventForm').reset();
@@ -303,15 +355,26 @@
             document.getElementById('eventModal').classList.add('show');
         }
         
-        // Function to edit an event
+        /**
+         * Edit an existing event
+         * Loads event data into modal form for editing
+         * @param {number} eventId - ID of the event to edit
+         */
         async function editEvent(eventId) {
+            // Verify user is still authenticated before allowing edit
+            if (!adminSession.isAuthenticated()) {
+                alert('Your session has expired. Please log in again.');
+                window.location.href = 'admin-dashboard.html';
+                return;
+            }
+            
             if (!isSupabaseConfigured()) {
                 alert('Demo mode - would edit event with ID: ' + eventId);
                 return;
             }
             
             try {
-                // Get event data
+                // Get event data from database
                 const { data: event, error } = await supabase
                     .from('events')
                     .select('*')
@@ -320,7 +383,7 @@
                 
                 if (error) throw error;
                 
-                // Populate form with event data
+                // Populate form with event data for editing
                 currentEditingId = eventId;
                 document.getElementById('eventModalTitle').textContent = 'Edit Event';
                 document.getElementById('eventTitle').value = event.title;
@@ -341,8 +404,18 @@
             }
         }
         
-        // Function to delete an event
+        /**
+         * Delete an event after confirmation
+         * @param {number} eventId - ID of the event to delete
+         */
         async function deleteEvent(eventId) {
+            // Verify user is still authenticated before allowing delete
+            if (!adminSession.isAuthenticated()) {
+                alert('Your session has expired. Please log in again.');
+                window.location.href = 'admin-dashboard.html';
+                return;
+            }
+            
             if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) return;
             
             if (!isSupabaseConfigured()) {
@@ -372,9 +445,19 @@
             }
         }
         
-        // Function to handle event form submission
+        /**
+         * Handle event form submission for create/update operations
+         * @param {Event} event - Form submission event
+         */
         async function handleEventSubmit(event) {
             event.preventDefault();
+            
+            // Verify user is still authenticated before saving
+            if (!adminSession.isAuthenticated()) {
+                alert('Your session has expired. Please log in again.');
+                window.location.href = 'admin-dashboard.html';
+                return;
+            }
             
             const form = event.target;
             const formData = new FormData(form);
@@ -401,7 +484,7 @@
                     throw new Error('Please fill in all required fields');
                 }
                 
-                // Prepare event data
+                // Prepare event data for database
                 const eventData = {
                     title: formData.get('title').trim(),
                     description: formData.get('description')?.trim() || null,
@@ -432,6 +515,9 @@
                 
                 messageDiv.innerHTML = '<div class="message success">Event saved successfully!</div>';
                 
+                // Update session activity since user performed an action
+                adminSession.updateActivity();
+                
                 // Reload events and close modal after delay
                 setTimeout(() => {
                     closeModal('eventModal');
@@ -450,7 +536,10 @@
 
         // ===== MODAL MANAGEMENT FUNCTIONS =====
         
-        // Function to close modals
+        /**
+         * Close modal windows
+         * @param {string} modalId - ID of the modal to close
+         */
         function closeModal(modalId) {
             document.getElementById(modalId).classList.remove('show');
             currentEditingId = null;
@@ -466,7 +555,11 @@
 
         // ===== UTILITY FUNCTIONS =====
         
-        // Function to format dates consistently
+        /**
+         * Format dates consistently across the application
+         * @param {string} dateString - ISO date string to format
+         * @returns {string} - Formatted date string
+         */
         function formatDate(dateString) {
             const date = new Date(dateString);
             return date.toLocaleDateString('en-US', { 
@@ -477,7 +570,11 @@
             });
         }
         
-        // Function to format times consistently
+        /**
+         * Format times consistently across the application
+         * @param {string} timeString - Time string to format
+         * @returns {string} - Formatted time string
+         */
         function formatTime(timeString) {
             if (!timeString) return 'Time not set';
             const time = new Date(`1970-01-01T${timeString}`);
@@ -488,10 +585,34 @@
             });
         }
 
-        // ===== INITIALIZATION =====
+        // ===== SESSION ACTIVITY TRACKING =====
         
-        // Initialize events management when DOM is loaded
+        /**
+         * Track user activity on page interactions
+         * Updates session activity timestamp to keep session alive
+         */
+        function trackActivity() {
+            if (adminSession.isAuthenticated()) {
+                adminSession.updateActivity();
+            }
+        }
+        
+        // Add activity tracking to common user interactions
+        document.addEventListener('click', trackActivity);
+        document.addEventListener('keypress', trackActivity);
+
+        // ===== PAGE INITIALIZATION =====
+        
+        /**
+         * Initialize events management page when DOM is loaded
+         * Checks authentication and sets up page functionality
+         */
         document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication first - redirect if not authenticated
+            if (!checkAuthentication()) {
+                return; // Stop initialization if user is not authenticated
+            }
+            
             // Set up form submission handler
             document.getElementById('eventForm').addEventListener('submit', handleEventSubmit);
             
@@ -506,6 +627,30 @@
             
             console.log('🗓️ Events Management page loaded successfully!');
             console.log('🔗 Database connection:', isSupabaseConfigured() ? 'Configured' : 'Demo mode');
+            console.log('🔐 User:', adminSession.getCurrentUser().username);
+            
+            // Update session activity since page was loaded
+            adminSession.updateActivity();
+        });
+        
+        /**
+         * Handle browser tab/window close or navigation away
+         * Update session activity before leaving page
+         */
+        window.addEventListener('beforeunload', function() {
+            if (adminSession.isAuthenticated()) {
+                adminSession.updateActivity();
+            }
+        });
+        
+        /**
+         * Handle browser back/forward navigation
+         * Ensure user is still authenticated when navigating
+         */
+        window.addEventListener('popstate', function(event) {
+            if (!adminSession.isAuthenticated()) {
+                window.location.href = 'admin-dashboard.html';
+            }
         });
     </script>
 </body>
