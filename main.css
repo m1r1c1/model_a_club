@@ -92,7 +92,10 @@
 /* ===== HERO SECTION ===== */
 
 .hero {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    background-image: url('main.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     color: var(--white);
     padding: 120px 0 80px;
     text-align: center;
