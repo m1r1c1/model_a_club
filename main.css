@@ -93,7 +93,7 @@
 
 .hero {
     background-image: 
-        linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)),
+        linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)),
         url('main.png');
     background-size: cover;
     background-position: center;
